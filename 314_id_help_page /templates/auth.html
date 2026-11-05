@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .captcha-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    .captcha-tile {
+        position: relative;
+        cursor: pointer;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 8px 4px;
+        text-align: center;
+        transition: all 0.15s ease-in-out;
+        user-select: none;
+    }
+    .captcha-tile:hover {
+        border-color: #94a3b8;
+        background: #f8fafc;
+    }
+    .captcha-tile input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .captcha-tile.selected {
+        border-color: #0d6efd;
+        background-color: #eff6ff;
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+    }
+    .captcha-check-badge {
+        display: none;
+        position: absolute;
+        top: 4px;
+        right: 6px;
+        background: #0d6efd;
+        color: #fff;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 11px;
+        line-height: 18px;
+        font-weight: bold;
+    }
+    .captcha-tile.selected .captcha-check-badge {
+        display: inline-block;
+    }
+</style>
+
+{% macro render_picture_captcha(form_prefix) %}
+<div class="p-3 mb-3 border rounded bg-light">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+        <span class="fw-semibold small text-dark">🛡 Human Verification Check</span>
+        <span class="badge bg-primary">Visual CAPTCHA</span>
+    </div>
+    <p class="small text-muted mb-2">{{ captcha.prompt }}:</p>
+    <div class="captcha-grid mb-2">
+        {% for tile in captcha.tiles %}
+        <label class="captcha-tile" onclick="setTimeout(() => this.classList.toggle('selected', this.querySelector('input').checked), 0)">
+            <input type="checkbox" name="captcha_picks" value="{{ tile.id }}">
+            <span class="captcha-check-badge">✓</span>
+            <div>{{ tile.svg | safe }}</div>
+            <div class="small fw-semibold text-dark mt-1" style="font-size: 0.74rem;">{{ tile.label }}</div>
+        </label>
+        {% endfor %}
+    </div>
+    <div class="form-check small mb-0">
+        <input class="form-check-input" type="checkbox" name="human_checkbox" id="{{ form_prefix }}HumanCheck" required>
+        <label class="form-check-label" for="{{ form_prefix }}HumanCheck">
+            I confirm I am a human user
+        </label>
+    </div>
+</div>
+{% endmacro %}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <ul class="nav nav-pills nav-fill mb-4">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_panel == 'login' %}active{% endif %}" href="{{ url_for('auth.authenticateLogin') }}">Authenticate / Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_panel == 'register' %}active{% endif %}" href="{{ url_for('auth.registerAccount') }}">Register Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_panel == 'recover' %}active{% endif %}" href="{{ url_for('auth.resetForgottenPassword') }}">Reset Password</a>
+                </li>
+            </ul>
+
+            {% if active_panel == 'login' %}
+                <h5 class="mb-3">Sign In to Your Account</h5>
+                <form method="POST" action="{{ url_for('auth.authenticateLogin') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Email or Username</label>
+                        <input type="text" name="identifier" class="form-control" placeholder="Email or Username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Password" required>
+                        <div class="form-text small">Verified using PBKDF2-HMAC-SHA256 hash comparison.</div>
+                    </div>
+
+                    {{ render_picture_captcha('login') }}
+
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+
+            {% elif active_panel == 'register' %}
+                <h5 class="mb-2">Public Account Registration</h5>
+                <p class="text-muted small">Public registration is available for Renovation Customers and Interior Designers. Passwords are salted and hashed with PBKDF2-SHA256.</p>
+                <form method="POST" action="{{ url_for('auth.registerAccount') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Account Role</label>
+                            <select name="role" class="form-select">
+                                <option value="Customer">Customer</option>
+                                <option value="Interior Designer">Interior Designer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" name="phone" class="form-control" placeholder="+65 91234567" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password (min. 6 chars)</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+
+                    {{ render_picture_captcha('reg') }}
+
+                    <button type="submit" class="btn btn-success w-100">Register Account</button>
+                </form>
+
+            {% elif active_panel == 'recover' %}
+                <h5 class="mb-3">Reset Forgotten Password</h5>
+                {% if demo_token %}
+                    <div class="alert alert-warning small">
+                        <strong>Simulated Recovery Email Inbox:</strong><br>
+                        Recipient: <code>{{ demo_email }}</code> | Recovery Token: <code>{{ demo_token }}</code>
+                    </div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('auth.resetForgottenPassword') }}" class="mb-4">
+                    <input type="hidden" name="action" value="dispatch_email">
+                    <label class="form-label">Step 1: Dispatch Recovery Email</label>
+                    <div class="mb-2">
+                        <input type="email" name="email" class="form-control" value="{{ demo_email or '' }}" placeholder="Enter registered email" required>
+                    </div>
+
+                    {{ render_picture_captcha('rec') }}
+
+                    <button class="btn btn-outline-primary w-100" type="submit">Send Recovery Token</button>
+                </form>
+
+                <hr>
+                <form method="POST" action="{{ url_for('auth.resetForgottenPassword') }}">
+                    <input type="hidden" name="action" value="confirm_reset">
+                    <label class="form-label">Step 2: Validate Token & Set New Password</label>
+                    <div class="mb-2">
+                        <input type="email" name="email" class="form-control" value="{{ demo_email or '' }}" placeholder="Registered Email" required>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="token" class="form-control" value="{{ demo_token or '' }}" placeholder="Reset Token" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" name="new_password" class="form-control" placeholder="New Password (min 6 chars)" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">Validate Token & Reset Password</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h5 class="mb-3">Manage Personal Profile</h5>
+            <form method="POST" action="{{ url_for('auth.managePersonalProfile') }}">
+                <input type="hidden" name="form_type" value="profile">
+                <div class="mb-3">
+                    <label class="form-label">Username (Read-only)</label>
+                    <input type="text" class="form-control bg-light" value="{{ user.username }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Assigned Role</label>
+                    <input type="text" class="form-control bg-light" value="{{ user.role }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contact Phone</label>
+                    <input type="text" name="phone" class="form-control" value="{{ user.phone }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Personal Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card p-4">
+            <h5 class="mb-3">Configure Notification Preferences</h5>
+            <p class="text-muted small">Choose how you want to be notified about project shortlists, inquiries, and account security alerts.</p>
+            <form method="POST" action="{{ url_for('auth.managePersonalProfile') }}">
+                <input type="hidden" name="form_type" value="notifications">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="notify_email" id="notifyEmail" {% if user.notify_email == 'True' %}checked{% endif %}>
+                    <label class="form-check-label" for="notifyEmail">
+                        <strong>Email Notifications</strong><br>
+                        <span class="text-muted small">Receive account security & project shortlist alerts via email.</span>
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="notify_sms" id="notifySms" {% if user.notify_sms == 'True' %}checked{% endif %}>
+                    <label class="form-check-label" for="notifySms">
+                        <strong>SMS Notifications</strong><br>
+                        <span class="text-muted small">Receive instant mobile SMS alerts for customer renovation inquiries.</span>
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input" type="checkbox" name="notify_marketing" id="notifyMkt" {% if user.notify_marketing == 'True' %}checked{% endif %}>
+                    <label class="form-check-label" for="notifyMkt">
+                        <strong>Platform News & Digest</strong><br>
+                        <span class="text-muted small">Weekly featured Interior Design Projects (IDPs) and renovation guides.</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-success">Update Notification Preferences</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

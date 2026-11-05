@@ -1,0 +1,532 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">User & Business Administration Console</h4>
+        <small class="text-muted">Manage user accounts, resolve duplicate profiles, verify ACRA registrations, and moderate listed Interior Design firms.</small>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.manageUserAccounts', tab='ai_assistant') }}" class="btn btn-dark btn-sm">
+            🤖 Open AI To-Do Co-Pilot ({{ ai_todos|length }} Tasks)
+        </a>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'accounts' %}active fw-bold{% endif %}" href="{{ url_for('admin.manageUserAccounts', tab='accounts') }}">
+            1. Search, Inspect & Moderate ({{ accounts|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'duplicates' %}active fw-bold{% endif %}" href="{{ url_for('admin.manageUserAccounts', tab='duplicates') }}">
+            2. Identify & Remove Duplicates ({{ duplicate_groups|length }} active)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'verification' %}active fw-bold{% endif %}" href="{{ url_for('admin.manageUserAccounts', tab='verification') }}">
+            3. Verify Business Registration ({{ evidence_list|length }} pending)
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'listed_businesses' %}active fw-bold{% endif %}" href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}">
+            4. Listed Verified Businesses ({{ listed_businesses|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'audit' %}active fw-bold{% endif %}" href="{{ url_for('admin.manageUserAccounts', tab='audit') }}">
+            5. Account Audit Log ({{ audit_log|length }})
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if active_tab == 'ai_assistant' %}active fw-bold text-primary{% endif %}" href="{{ url_for('admin.manageUserAccounts', tab='ai_assistant') }}">
+            🤖 6. AI Assistant To-Do ({{ ai_todos|length }})
+        </a>
+    </li>
+</ul>
+
+{% if active_tab == 'accounts' %}
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card p-3">
+            <form method="GET" action="{{ url_for('admin.manageUserAccounts') }}" class="row g-2 mb-3">
+                <input type="hidden" name="tab" value="accounts">
+                <div class="col-md-5">
+                    <input type="text" name="q" value="{{ search_q }}" class="form-control form-control-sm" placeholder="Search name, email, username...">
+                </div>
+                <div class="col-md-3">
+                    <select name="role" class="form-select form-select-sm">
+                        <option value="">All Roles</option>
+                        {% for r in ['User Admin', 'Interior Designer', 'Customer', 'Platform Management'] %}
+                            <option value="{{ r }}" {% if role_filter == r %}selected{% endif %}>{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">All Status</option>
+                        {% for s in ['Active', 'Deactivated', 'Duplicate_Disabled'] %}
+                            <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                </div>
+            </form>
+
+            <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+                <table class="table table-hover table-sm align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name / Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in accounts %}
+                        <tr class="{% if selected_account and selected_account.user_id == u.user_id %}table-primary{% endif %}">
+                            <td>#{{ u.user_id }}</td>
+                            <td>
+                                <strong>{{ u.full_name }}</strong><br>
+                                <span class="text-muted small">{{ u.email }}</span>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ u.role }}</span></td>
+                            <td><span class="badge badge-{{ u.status }}">{{ u.status }}</span></td>
+                            <td>
+                                <a href="{{ url_for('admin.manageUserAccounts', tab='accounts', selected_id=u.user_id, q=search_q, role=role_filter, status=status_filter) }}" class="btn btn-outline-dark btn-sm">Inspect</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        {% if selected_account %}
+        <div class="card p-4">
+            <h5 class="mb-1">Selected Account Details</h5>
+            <p class="text-muted small mb-3">User ID #{{ selected_account.user_id }} ({{ selected_account.username }})</p>
+            <ul class="list-group list-group-flush mb-3 small">
+                <li class="list-group-item px-0"><strong>Full Name:</strong> {{ selected_account.full_name }}</li>
+                <li class="list-group-item px-0"><strong>Email:</strong> {{ selected_account.email }}</li>
+                <li class="list-group-item px-0"><strong>Phone:</strong> {{ selected_account.phone }}</li>
+                <li class="list-group-item px-0"><strong>Current Role:</strong> {{ selected_account.role }}</li>
+                <li class="list-group-item px-0"><strong>Current Status:</strong> <span class="badge badge-{{ selected_account.status }}">{{ selected_account.status }}</span></li>
+                <li class="list-group-item px-0"><strong>Created At:</strong> {{ selected_account.created_at }}</li>
+            </ul>
+
+            <hr>
+            <h6>Moderate / Deactivate or Reactivate Account</h6>
+            <form method="POST" action="{{ url_for('admin.moderateOrDeactivateAccounts') }}" class="mb-3">
+                <input type="hidden" name="target_user_id" value="{{ selected_account.user_id }}">
+                <input type="hidden" name="return_tab" value="accounts">
+                <div class="input-group input-group-sm">
+                    <select name="selected_status" class="form-select">
+                        <option value="Active" {% if selected_account.status == 'Active' %}selected{% endif %}>Active (Reactivate)</option>
+                        <option value="Deactivated" {% if selected_account.status == 'Deactivated' %}selected{% endif %}>Deactivated (Moderate)</option>
+                    </select>
+                    <button type="submit" class="btn btn-warning">Apply Status</button>
+                </div>
+            </form>
+
+            <h6>Assign / Update Account Role</h6>
+            <form method="POST" action="{{ url_for('admin.assignUpdateAccountRole') }}">
+                <input type="hidden" name="target_user_id" value="{{ selected_account.user_id }}">
+                <div class="input-group input-group-sm">
+                    <select name="new_role" class="form-select">
+                        {% for r in ['Customer', 'Interior Designer', 'Platform Management', 'User Admin'] %}
+                            <option value="{{ r }}" {% if selected_account.role == r %}selected{% endif %}>{{ r }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">Update Role</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% elif active_tab == 'duplicates' %}
+<div class="card p-4 mb-4">
+    <h5>Identify & Remove Duplicate Accounts</h5>
+    <p class="text-muted small">Confirm duplicate accounts below to disable their access while preserving referenced project and shortlist records.</p>
+
+    {% if not duplicate_groups %}
+        <div class="alert alert-success mb-0">
+            ✓ No active duplicate account clusters remaining! All identified duplicates have been resolved.
+        </div>
+    {% else %}
+        {% for group in duplicate_groups %}
+            <div class="border rounded p-3 mb-3 bg-white">
+                <h6 class="text-danger mb-2">Active Duplicate Cluster #{{ loop.index }}: {{ group[0].full_name }} ({{ group[0].phone }})</h6>
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created At</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for acc in group %}
+                        <tr>
+                            <td>#{{ acc.user_id }}</td>
+                            <td>{{ acc.username }}</td>
+                            <td>{{ acc.email }}</td>
+                            <td>{{ acc.role }}</td>
+                            <td>{{ acc.created_at }}</td>
+                            <td><span class="badge badge-{{ acc.status }}">{{ acc.status }}</span></td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.identifyRemoveDuplicates') }}" class="d-inline">
+                                    <input type="hidden" name="duplicate_user_id" value="{{ acc.user_id }}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Confirm Duplicate & Disable</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% if resolved_duplicates %}
+<div class="card p-4">
+    <h6 class="text-muted mb-2">Previously Resolved Duplicate Accounts ({{ resolved_duplicates|length }})</h6>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Username / Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dup in resolved_duplicates %}
+                <tr>
+                    <td>#{{ dup.user_id }}</td>
+                    <td>{{ dup.full_name }}</td>
+                    <td>{{ dup.username }} ({{ dup.email }})</td>
+                    <td>{{ dup.role }}</td>
+                    <td><span class="badge bg-secondary">Resolved (Disabled)</span></td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.moderateOrDeactivateAccounts') }}" class="d-inline">
+                            <input type="hidden" name="target_user_id" value="{{ dup.user_id }}">
+                            <input type="hidden" name="selected_status" value="Active">
+                            <input type="hidden" name="return_tab" value="duplicates">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">Restore Account</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% elif active_tab == 'verification' %}
+<div class="card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h5 class="mb-1">Pending Business Registration Queue ({{ evidence_list|length }})</h5>
+            <p class="text-muted small mb-0">Review ACRA UEN and BizFile documentation. Approved companies are automatically published to the <strong>Listed Verified Businesses</strong> directory.</p>
+        </div>
+        <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}" class="btn btn-outline-success btn-sm">
+            View Listed Verified Businesses ({{ listed_businesses|length }}) &rarr;
+        </a>
+    </div>
+
+    {% if not evidence_list %}
+        <div class="alert alert-success mt-3 mb-0">
+            ✓ All pending business registrations have been reviewed! Visit the <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}" class="alert-link">Listed Verified Businesses</a> tab to inspect or moderate verified firms.
+        </div>
+    {% else %}
+        <div class="table-responsive mt-3" style="max-height: 550px; overflow-y: auto;">
+            <table class="table table-hover table-sm align-middle">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>ID</th>
+                        <th>Designer / Company</th>
+                        <th>ACRA UEN</th>
+                        <th>Specialty</th>
+                        <th>Evidence Doc</th>
+                        <th>Status</th>
+                        <th>Review Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in evidence_list %}
+                    <tr>
+                        <td>#{{ ev.evidence_id }}</td>
+                        <td>
+                            <strong>{{ ev.company_name }}</strong><br>
+                            <span class="text-muted small">Designer: {{ ev.designer_name }} (#{{ ev.designer_user_id }})</span>
+                        </td>
+                        <td><code>{{ ev.registration_uen }}</code></td>
+                        <td><span class="badge bg-light text-dark border">{{ ev.specialty }}</span></td>
+                        <td><a href="{{ ev.evidence_document_url }}" target="_blank" class="small">View BizFile PDF</a></td>
+                        <td><span class="badge bg-warning text-dark">{{ ev.verification_status }}</span></td>
+                        <td>
+                            <form method="POST" action="{{ url_for('admin.verifyBusinessRegistration') }}" class="d-flex gap-1">
+                                <input type="hidden" name="evidence_id" value="{{ ev.evidence_id }}">
+                                <input type="text" name="remarks" class="form-control form-control-sm" placeholder="Review note" value="{{ ev.review_remarks }}" style="width: 150px;">
+                                <button type="submit" name="outcome" value="Verified" class="btn btn-success btn-sm">Approve & List</button>
+                                <button type="submit" name="outcome" value="Rejected" class="btn btn-outline-danger btn-sm">Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+{% elif active_tab == 'listed_businesses' %}
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card p-3">
+            <h5 class="mb-2">Listed Verified Businesses Directory</h5>
+            <p class="text-muted small mb-3">Search, filter, inspect, and moderate ACRA-verified Interior Design firms listed on 314 Interior Design Help.</p>
+            <form method="GET" action="{{ url_for('admin.manageUserAccounts') }}" class="row g-2 mb-3">
+                <input type="hidden" name="tab" value="listed_businesses">
+                <div class="col-md-5">
+                    <input type="text" name="biz_q" value="{{ biz_q }}" class="form-control form-control-sm" placeholder="Search company, UEN, designer, address...">
+                </div>
+                <div class="col-md-4">
+                    <select name="biz_specialty" class="form-select form-select-sm">
+                        <option value="">All Specialties</option>
+                        {% for sp in ['HDB & BTO Specialist', 'Condo & Luxury Specialist', 'Landed & Commercial', 'Scandinavian & Japandi Studio', 'Full Turnkey Renovation'] %}
+                            <option value="{{ sp }}" {% if biz_specialty == sp %}selected{% endif %}>{{ sp }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-1">
+                    <select name="biz_status" class="form-select form-select-sm">
+                        <option value="">All Status</option>
+                        {% for st in ['Active', 'Suspended'] %}
+                            <option value="{{ st }}" {% if biz_status == st %}selected{% endif %}>{{ st }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                </div>
+            </form>
+
+            <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+                <table class="table table-hover table-sm align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>ID</th>
+                            <th>Company / Designer</th>
+                            <th>ACRA UEN</th>
+                            <th>Specialty</th>
+                            <th>Listing Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in listed_businesses %}
+                        <tr class="{% if selected_business and selected_business.evidence_id == b.evidence_id %}table-primary{% endif %}">
+                            <td>#{{ b.evidence_id }}</td>
+                            <td>
+                                <strong>{{ b.company_name }}</strong><br>
+                                <span class="text-muted small">Lead ID: {{ b.designer_name }} (#{{ b.designer_user_id }})</span>
+                            </td>
+                            <td><code>{{ b.registration_uen }}</code></td>
+                            <td><span class="badge bg-secondary">{{ b.specialty }}</span></td>
+                            <td>
+                                <span class="badge {% if b.listing_status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ b.listing_status }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses', selected_biz_id=b.evidence_id, biz_q=biz_q, biz_specialty=biz_specialty, biz_status=biz_status) }}" class="btn btn-outline-dark btn-sm">Inspect</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 mb-4">
+        {% if selected_business %}
+        <div class="card p-4">
+            <h5 class="mb-1">Verified Business Details</h5>
+            <p class="text-muted small mb-3">{{ selected_business.company_name }} (Record #{{ selected_business.evidence_id }})</p>
+            <ul class="list-group list-group-flush mb-3 small">
+                <li class="list-group-item px-0"><strong>ACRA UEN:</strong> <code>{{ selected_business.registration_uen }}</code> <span class="badge bg-success ms-1">Verified</span></li>
+                <li class="list-group-item px-0"><strong>Lead Designer:</strong> {{ selected_business.designer_name }} (Account #{{ selected_business.designer_user_id }})</li>
+                <li class="list-group-item px-0"><strong>Specialty:</strong> {{ selected_business.specialty }}</li>
+                <li class="list-group-item px-0"><strong>Years in Business:</strong> {{ selected_business.years_in_business }} years</li>
+                <li class="list-group-item px-0"><strong>Office Address:</strong> {{ selected_business.address }}</li>
+                <li class="list-group-item px-0"><strong>Contact Phone:</strong> {{ selected_business.contact_phone }}</li>
+                <li class="list-group-item px-0"><strong>Website:</strong> <a href="{{ selected_business.website }}" target="_blank">{{ selected_business.website }}</a></li>
+                <li class="list-group-item px-0"><strong>BizFile Evidence:</strong> <a href="{{ selected_business.evidence_document_url }}" target="_blank">View Certificate PDF</a></li>
+                <li class="list-group-item px-0"><strong>Listing Status:</strong>
+                    <span class="badge {% if selected_business.listing_status == 'Active' %}bg-success{% else %}bg-danger{% endif %}">
+                        {{ selected_business.listing_status }}
+                    </span>
+                </li>
+                <li class="list-group-item px-0"><strong>Last Review Note:</strong> {{ selected_business.review_remarks }}</li>
+            </ul>
+
+            <hr>
+            <h6>Moderate Business Listing Status</h6>
+            <form method="POST" action="{{ url_for('admin.moderateListedBusiness') }}" class="mb-3">
+                <input type="hidden" name="evidence_id" value="{{ selected_business.evidence_id }}">
+                <div class="mb-2">
+                    <select name="listing_status" class="form-select form-select-sm">
+                        <option value="Active" {% if selected_business.listing_status == 'Active' %}selected{% endif %}>Active (Publicly Listed)</option>
+                        <option value="Suspended" {% if selected_business.listing_status == 'Suspended' %}selected{% endif %}>Suspended (Hidden from Search)</option>
+                        <option value="Revoked">Revoke Verification (Return to Pending)</option>
+                    </select>
+                </div>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="remarks" class="form-control" placeholder="Moderation reason / note">
+                    <button type="submit" class="btn btn-warning">Apply Status</button>
+                </div>
+            </form>
+
+            <h6>Update Business Specialty Category</h6>
+            <form method="POST" action="{{ url_for('admin.moderateListedBusiness') }}">
+                <input type="hidden" name="evidence_id" value="{{ selected_business.evidence_id }}">
+                <div class="input-group input-group-sm">
+                    <select name="specialty" class="form-select">
+                        {% for sp in ['HDB & BTO Specialist', 'Condo & Luxury Specialist', 'Landed & Commercial', 'Scandinavian & Japandi Studio', 'Full Turnkey Renovation'] %}
+                            <option value="{{ sp }}" {% if selected_business.specialty == sp %}selected{% endif %}>{{ sp }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline-primary">Update Specialty</button>
+                </div>
+            </form>
+        </div>
+        {% else %}
+        <div class="card p-4 text-muted small">
+            No verified businesses match the current filter criteria.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% elif active_tab == 'audit' %}
+<div class="card p-4">
+    <h5>Account & Business Audit Log</h5>
+    <p class="text-muted small">Complete chronological history of account moderations, duplicate resolutions, and business registration reviews.</p>
+    <div class="table-responsive" style="max-height: 550px; overflow-y: auto;">
+        <table class="table table-striped table-sm">
+            <thead class="table-light sticky-top">
+                <tr>
+                    <th>Audit ID</th>
+                    <th>Timestamp</th>
+                    <th>Admin ID</th>
+                    <th>Target Account</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in audit_log %}
+                <tr>
+                    <td>#{{ entry.audit_id }}</td>
+                    <td>{{ entry.timestamp }}</td>
+                    <td>Admin #{{ entry.admin_user_id }}</td>
+                    <td>#{{ entry.target_user_id }} ({{ entry.target_email }})</td>
+                    <td><span class="badge bg-info text-dark">{{ entry.action }}</span></td>
+                    <td>{{ entry.details }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% elif active_tab == 'ai_assistant' %}
+<div class="card p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-3 border-bottom">
+        <div>
+            <h5 class="mb-1">🤖 AI Admin Co-Pilot & Interactive To-Do Queue</h5>
+            <p class="text-muted small mb-0">
+                The AI pre-screens active duplicate accounts and pending ACRA business registrations, asks a verification question for each item, and executes the resolution in 1 click after your reply.
+            </p>
+        </div>
+        {% if ai_todos %}
+        <form method="POST" action="{{ url_for('admin.executeAiAdminTodo') }}" class="mt-2 mt-md-0">
+            <input type="hidden" name="task_type" value="batch_all">
+            <input type="hidden" name="target_id" value="ALL">
+            <input type="hidden" name="admin_reply" value="Yes, approve all AI recommendations">
+            <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+                ⚡ Reply "Yes" & Auto-Resolve All ({{ ai_todos|length }} Tasks) in 1 Click
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if not ai_todos %}
+        <div class="alert alert-success mb-0">
+            🎉 All duplicate clusters and pending business registrations have been resolved! Both the Duplicate Queue and Pending Verification Queue are now clear, and verified firms are live in <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}" class="alert-link">Listed Verified Businesses</a>.
+        </div>
+    {% else %}
+        {% for item in ai_todos %}
+        <div class="border rounded p-3 mb-3 bg-white shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <span class="badge {% if item.task_type == 'duplicate' %}bg-danger{% else %}bg-warning text-dark{% endif %} me-1">
+                        {{ item.badge }}
+                    </span>
+                    <span class="badge bg-light text-dark border">{{ item.confidence }}</span>
+                    <strong class="ms-2">{{ item.title }}</strong>
+                </div>
+                <code class="small text-muted">{{ item.todo_id }}</code>
+            </div>
+
+            <p class="small text-muted mb-2">{{ item.analysis }}</p>
+
+            <div class="p-2 px-3 mb-3 rounded" style="background-color: #f1f5f9; border-left: 4px solid #0d6efd;">
+                <span class="small fw-bold text-primary">🤖 AI Assistant Question:</span>
+                <span class="small text-dark">{{ item.ai_question }}</span>
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.executeAiAdminTodo') }}" class="row g-2 align-items-center">
+                <input type="hidden" name="task_type" value="{{ item.task_type }}">
+                <input type="hidden" name="target_id" value="{{ item.target_id }}">
+                <div class="col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light">Your Reply:</span>
+                        <input type="text" name="admin_reply" class="form-control" value="{% if item.task_type == 'duplicate' %}Yes, confirm duplicate and disable access{% else %}Approve & verify ACRA UEN{% endif %}">
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-success fw-semibold">
+                        ✓ Send Reply & Execute in 1 Click
+                    </button>
+                    {% if item.task_type == 'verification' %}
+                    <button type="submit" name="admin_reply" value="Reject UEN registration" class="btn btn-sm btn-outline-danger">
+                        ✕ Reply "Reject" & Execute
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

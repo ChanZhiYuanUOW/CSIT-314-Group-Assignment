@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero-banner p-4 p-md-5 mb-4 shadow-sm">
+    <div class="row align-items-center">
+        {% if user %}
+        <div class="col-md-8">
+            <span class="badge bg-info text-dark mb-2">{{ role }} Portal</span>
+            <h2 class="fw-bold mb-2">Welcome back, {{ user.full_name }}!</h2>
+            <p class="mb-3 text-light opacity-75">
+                314 Interior Design Help connects Singapore homeowners with verified Interior Designers.
+                Access your role tools, manage your profile and notification preferences, or explore featured renovation portfolios below.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                {% if role in ['User Admin', 'Platform Management'] %}
+                    <a href="{{ url_for('admin.manageUserAccounts', tab='accounts') }}" class="btn btn-warning fw-semibold">
+                        Open Admin Console
+                    </a>
+                    <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}" class="btn btn-success fw-semibold">
+                        Listed Verified Businesses ({{ stats.listed_businesses }})
+                    </a>
+                    <a href="{{ url_for('admin.manageUserAccounts', tab='ai_assistant') }}" class="btn btn-outline-light">
+                        🤖 AI To-Do Co-Pilot ({{ stats.pending_verifications + stats.duplicate_clusters }} Tasks)
+                    </a>
+                {% endif %}
+                <a href="{{ url_for('auth.managePersonalProfile') }}" class="btn btn-info text-dark fw-semibold">
+                    Manage Personal Profile & Notifications
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4 mt-3 mt-md-0">
+            <div class="card bg-dark bg-opacity-50 text-light p-3 border border-secondary">
+                <h6 class="text-uppercase small text-info mb-2">My Account Summary</h6>
+                <div class="small mb-1"><strong>Username:</strong> {{ user.username }}</div>
+                <div class="small mb-1"><strong>Email:</strong> {{ user.email }}</div>
+                <div class="small mb-1"><strong>Phone:</strong> {{ user.phone }}</div>
+                <div class="small mb-1"><strong>Status:</strong> <span class="badge bg-success">{{ user.status }}</span></div>
+                <div class="small">
+                    <strong>Notifications:</strong>
+                    Email: {{ 'On' if user.notify_email == 'True' else 'Off' }} |
+                    SMS: {{ 'On' if user.notify_sms == 'True' else 'Off' }}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <span class="badge bg-warning text-dark mb-2">Singapore Renovation Matching Platform</span>
+            <h2 class="fw-bold mb-2">Find Your Ideal Interior Designer on 314 Interior Design Help</h2>
+            <p class="mb-3 text-light opacity-75">
+                Browse 150+ curated HDB, Condo, and Landed renovation portfolios from ACRA-verified Interior Designers across Singapore. Sign in or register to shortlist projects and manage your account.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('auth.authenticateLogin') }}" class="btn btn-primary fw-semibold px-4">
+                    Authenticate / Login
+                </a>
+                <a href="{{ url_for('auth.registerAccount') }}" class="btn btn-success fw-semibold px-4">
+                    Register Account (Customer / ID)
+                </a>
+                <a href="{{ url_for('auth.resetForgottenPassword') }}" class="btn btn-outline-light">
+                    Reset Forgotten Password
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if user %}
+<!-- Platform Quick Metrics (Shown only after login) -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <span class="text-muted small">Total Registered Accounts</span>
+            <h3 class="fw-bold mb-1">{{ stats.total_users }}</h3>
+            <span class="small text-success">{{ stats.total_designers }} IDs &bull; {{ stats.total_customers }} Customers</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <span class="text-muted small">Pending ACRA Verifications</span>
+            <h3 class="fw-bold mb-1 text-warning">{{ stats.pending_verifications }}</h3>
+            {% if role in ['User Admin', 'Platform Management'] %}
+                <a href="{{ url_for('admin.manageUserAccounts', tab='verification') }}" class="small text-decoration-none">Review Pending Queue &rarr;</a>
+            {% else %}
+                <span class="small text-muted">Verified by Admin</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <span class="text-muted small">Listed Verified Businesses</span>
+            <h3 class="fw-bold mb-1 text-success">{{ stats.listed_businesses }}</h3>
+            {% if role in ['User Admin', 'Platform Management'] %}
+                <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}" class="small text-decoration-none">Search & Moderate Directory &rarr;</a>
+            {% else %}
+                <span class="small text-muted">Active ID Firms</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 h-100">
+            <span class="text-muted small">Active Duplicate Clusters</span>
+            <h3 class="fw-bold mb-1 text-danger">{{ stats.duplicate_clusters }}</h3>
+            {% if role in ['User Admin', 'Platform Management'] %}
+                <a href="{{ url_for('admin.manageUserAccounts', tab='duplicates') }}" class="small text-decoration-none">Identify & Resolve &rarr;</a>
+            {% else %}
+                <span class="small text-muted">Monitored by Admin</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if role in ['User Admin', 'Platform Management'] %}
+<div class="card p-4 mb-4 border-start border-4 border-warning">
+    <h5 class="mb-2">Administration Quick Actions</h5>
+    <p class="text-muted small mb-3">Jump directly to any of your administration modules:</p>
+    <div class="row g-2">
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.manageUserAccounts', tab='accounts') }}" class="btn btn-outline-dark w-100 text-start h-100">
+                <strong>1. User Accounts</strong><br>
+                <span class="small text-muted">Search, inspect & moderate</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.manageUserAccounts', tab='duplicates') }}" class="btn btn-outline-danger w-100 text-start h-100">
+                <strong>2. Duplicates</strong><br>
+                <span class="small text-muted">Resolve active clusters</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.manageUserAccounts', tab='verification') }}" class="btn btn-outline-warning text-dark w-100 text-start h-100">
+                <strong>3. Verify UEN</strong><br>
+                <span class="small text-muted">Review pending queue</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.manageUserAccounts', tab='listed_businesses') }}" class="btn btn-outline-success w-100 text-start h-100">
+                <strong>4. Verified Firms</strong><br>
+                <span class="small text-muted">Search & moderate directory</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.manageUserAccounts', tab='audit') }}" class="btn btn-outline-secondary w-100 text-start h-100">
+                <strong>5. Audit Log</strong><br>
+                <span class="small text-muted">Full activity history</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a href="{{ url_for('admin.manageUserAccounts', tab='ai_assistant') }}" class="btn btn-outline-primary w-100 text-start h-100">
+                <strong>🤖 6. AI To-Do</strong><br>
+                <span class="small text-muted">1-click smart resolution</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Featured Interior Design Projects Showcase -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Featured Interior Design Projects (IDPs)</h5>
+    <span class="text-muted small">Platform Showcase</span>
+</div>
+<div class="row g-4">
+    {% for proj in featured_projects %}
+    <div class="col-md-4">
+        <div class="card h-100 overflow-hidden">
+            <img src="{{ proj.image_url }}" class="card-img-top" alt="{{ proj.title }}" style="height: 190px; object-fit: cover;">
+            <div class="card-body d-flex flex-column">
+                <div class="mb-2">
+                    <span class="badge bg-dark">{{ proj.style }}</span>
+                    <span class="badge bg-secondary">{{ proj.property_type }}</span>
+                </div>
+                <h6 class="card-title fw-bold">{{ proj.title }}</h6>
+                <p class="text-muted small mb-2">By {{ proj.designer }} &bull; Est. SGD ${{ proj.estimated_cost_sgd }}</p>
+                <div class="mt-auto pt-2 border-top d-flex justify-content-between small text-muted">
+                    <span>👁 {{ proj.views_count }} views</span>
+                    <span>⭐ {{ proj.shortlist_count }} shortlisted</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
