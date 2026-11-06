@@ -30,7 +30,7 @@
                     Signed in as <strong>{{ session.get('full_name') }}</strong>
                     <span class="badge bg-primary ms-1">{{ session.get('role') }}</span>
                 </span>
-                {% if session.get('role') in ['User Admin', 'Platform Management'] %}
+                {% if session.get('role') == 'User Admin' %}
                     <a href="{{ url_for('admin.manageUserAccounts') }}" class="btn btn-warning btn-sm me-2">User Admin Console</a>
                 {% endif %}
                 <a href="{{ url_for('auth.managePersonalProfile') }}" class="btn btn-outline-info btn-sm me-2">My Profile & Preferences</a>
