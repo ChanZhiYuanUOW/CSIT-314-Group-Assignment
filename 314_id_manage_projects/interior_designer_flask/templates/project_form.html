@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if project else 'Create' }} project{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">PORTFOLIO / PROJECT</span><h1>{{ 'Edit project' if project else 'Create a project listing' }}</h1><p class="muted">Add the details customers need to understand your work.</p></div><a class="btn light" href="{{ url_for('dashboard') }}">← Back</a></div>
+<form method="post" class="form-card">
+  <label>Project title *</label><input name="title" required value="{{ project.title if project else '' }}" placeholder="e.g. Warm Minimalist Condo">
+  <label>Project description</label><textarea name="description" rows="5" placeholder="Describe the design concept, materials and work completed...">{{ project.description if project else '' }}</textarea>
+  <div class="form-row"><div><label>Category</label><select name="category"><option value="">Choose a category</option>{% for cat in ['Residential','Commercial','Kitchen','Living Room','Bedroom','Bathroom','Office'] %}<option value="{{ cat }}" {% if project and project.category == cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}</select></div>
+  <div><label>Metadata tags</label><input name="tags" value="{{ project.tags if project else '' }}" placeholder="modern, minimalist, HDB"></div></div>
+  <p class="hint">Separate tags with commas. You can add photos after saving this form.</p>
+  <div class="form-footer"><button class="btn light" name="action" value="draft">Save as draft</button><button class="btn primary" name="action" value="publish">Save and publish</button></div>
+</form>
+{% endblock %}
