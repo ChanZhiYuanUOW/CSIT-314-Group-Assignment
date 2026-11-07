@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+{% set status_badge = {'Pending': 'bg-warning text-dark', 'In Progress': 'bg-info text-dark', 'Responded': 'bg-success',
+                       'Requested': 'bg-warning text-dark', 'Accepted': 'bg-success', 'Declined': 'bg-danger',
+                       'Time Proposed': 'bg-info text-dark'} %}
+<div class="mb-3">
+    <h4 class="mb-0">Process Service Requests</h4>
+    <small class="text-muted">Review incoming renovation requests, send itemised cost estimates and respond to consultation requests.</small>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card p-3">
+            <form method="GET" action="{{ url_for('service_request.processServiceRequest') }}" class="mb-3">
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Requests</option>
+                    {% for s in statuses %}
+                        <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <div class="list-group">
+                {% for r in requests %}
+                    <a href="{{ url_for('service_request.processServiceRequest', status=status_filter, selected_id=r.request_id) }}"
+                       class="list-group-item list-group-item-action {% if selected and selected.request.request_id == r.request_id %}active{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>#{{ r.request_id }} {{ r.customer_name }}</strong>
+                            <span class="badge {{ status_badge[r.status] }}">{{ r.status }}</span>
+                        </div>
+                        <small>{{ r.request_type }} · Budget S${{ "{:,.0f}".format(r.budget|float) }}</small><br>
+                        <small class="{% if not (selected and selected.request.request_id == r.request_id) %}text-muted{% endif %}">Submitted {{ r.submitted_at[:10] }}</small>
+                    </a>
+                {% else %}
+                    <p class="text-muted small mb-0">No service requests found.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        {% if selected %}
+        {% set req = selected.request %}
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">Request #{{ req.request_id }} — {{ req.request_type }}</h5>
+                <span class="badge {{ status_badge[req.status] }}">{{ req.status }}</span>
+            </div>
+            <p class="text-muted small mb-3">
+                From <strong>{{ selected.customer.full_name if selected.customer else 'Unknown customer' }}</strong>
+                {% if selected.customer %}({{ selected.customer.email }}, {{ selected.customer.phone }}){% endif %}
+                · Submitted {{ req.submitted_at|friendly_time }}
+            </p>
+            <h6>Renovation Brief</h6>
+            <p>{{ req.renovation_brief }}</p>
+            <h6 class="mb-0">Budget: S${{ "{:,.2f}".format(req.budget|float) }}</h6>
+        </div>
+
+        {% if selected.wants_quotation %}
+        {% set quote = selected.quotation %}
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3">Itemised Cost Estimate</h5>
+            {% if quote %}
+                <table class="table table-sm align-middle">
+                    <thead class="table-light"><tr><th>#</th><th>Item</th><th class="text-end">Amount (S$)</th></tr></thead>
+                    <tbody>
+                        {% for item in quote["items"] %}
+                        <tr><td>{{ item.line_no }}</td><td>{{ item.description }}</td><td class="text-end">{{ "{:,.2f}".format(item.amount|float) }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot><tr><th colspan="2">Total</th><th class="text-end">{{ "{:,.2f}".format(quote.total_amount|float) }}</th></tr></tfoot>
+                </table>
+                <p class="small mb-1"><strong>Scope:</strong> {{ quote.scope }}</p>
+                <p class="small mb-1"><strong>Exclusions:</strong> {{ quote.exclusions or 'None' }}</p>
+                <p class="small text-muted">Sent {{ quote.created_at|friendly_time }}</p>
+                <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#estimateForm">Revise Estimate</button>
+            {% else %}
+                <p class="text-muted small">The customer is waiting for an itemised quotation.</p>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('service_request.generateItemisedCostEstimate', request_id=req.request_id) }}"
+                  id="estimateForm" class="mt-3 {% if quote %}collapse{% endif %}">
+                <table class="table table-sm align-middle mb-2">
+                    <thead><tr><th>Item description</th><th style="width: 160px;">Amount (S$)</th><th style="width: 40px;"></th></tr></thead>
+                    <tbody id="itemRows">
+                        {% set rows = quote["items"] if quote else [{}, {}, {}] %}
+                        {% for item in rows %}
+                        <tr>
+                            <td><input type="text" name="item_description" class="form-control form-control-sm" value="{{ item.description or '' }}" placeholder="e.g. Kitchen cabinets"></td>
+                            <td><input type="number" name="item_amount" class="form-control form-control-sm item-amount" value="{{ item.amount or '' }}" min="0.01" step="0.01"></td>
+                            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove item">&times;</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addItemRow">+ Add Item</button>
+                <p class="mb-3">
+                    <strong>Total: S$<span id="estimateTotal">0.00</span></strong>
+                    <span id="budgetNote" class="small ms-2"></span>
+                </p>
+                <div class="mb-3">
+                    <label class="form-label">Scope of works</label>
+                    <textarea name="scope" class="form-control form-control-sm" rows="2" required>{{ quote.scope if quote else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Exclusions</label>
+                    <textarea name="exclusions" class="form-control form-control-sm" rows="2" placeholder="Optional">{{ quote.exclusions if quote else '' }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">{% if quote %}Send Revised Estimate{% else %}Generate & Send Estimate{% endif %}</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if selected.wants_consultation and selected.consultation %}
+        {% set cons = selected.consultation %}
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">Consultation Request</h5>
+                <span class="badge {{ status_badge[cons.status] }}">{{ cons.status }}</span>
+            </div>
+            {% if cons.status == 'Requested' %}
+                <p class="mb-1">Customer asked for: <strong>{{ cons.proposed_time|friendly_time }}</strong></p>
+                {% if selected.requested_time_is_free %}
+                    <p class="small text-success">This matches one of your free availability slots.</p>
+                {% else %}
+                    <p class="small text-danger">You have no free slot at this time, so it can't be accepted. Propose another time or decline.</p>
+                {% endif %}
+                <form method="POST" action="{{ url_for('service_request.acceptDeclineOrProposeTime', request_id=req.request_id) }}">
+                    <div class="mb-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="decision" id="decAccept" value="accept" {% if selected.requested_time_is_free %}checked{% else %}disabled{% endif %}>
+                            <label class="form-check-label" for="decAccept">Accept</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="decision" id="decPropose" value="propose" {% if not selected.requested_time_is_free %}checked{% endif %}>
+                            <label class="form-check-label" for="decPropose">Propose New Time</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="decision" id="decDecline" value="decline">
+                            <label class="form-check-label" for="decDecline">Decline</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New time (for Propose)</label>
+                        <select name="slot_id" class="form-select form-select-sm">
+                            <option value="">Choose one of your free slots...</option>
+                            {% for slot in selected.available_slots %}
+                                <option value="{{ slot.slot_id }}">{{ slot.start_time|friendly_time }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not selected.available_slots %}<small class="text-muted">You have no free upcoming slots.</small>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Note to customer</label>
+                        <textarea name="note" class="form-control form-control-sm" rows="2" placeholder="Required when declining"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send Response</button>
+                </form>
+            {% else %}
+                <p class="mb-1">Customer asked for: {{ cons.proposed_time|friendly_time }}</p>
+                {% if cons.status == 'Accepted' %}
+                    <p class="mb-1">Confirmed for: <strong>{{ cons.confirmed_time|friendly_time }}</strong></p>
+                {% elif cons.status == 'Time Proposed' %}
+                    <p class="mb-1">You proposed: <strong>{{ cons.proposed_time|friendly_time }}</strong> — waiting for the customer.</p>
+                {% endif %}
+                {% if cons.designer_note %}<p class="small mb-1"><strong>Your note:</strong> {{ cons.designer_note }}</p>{% endif %}
+                <p class="small text-muted mb-0">Responded {{ cons.responded_at|friendly_time }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="card p-4"><p class="text-muted mb-0">Select a service request to view its details.</p></div>
+        {% endif %}
+    </div>
+</div>
+
+{% if selected and selected.wants_quotation %}
+<script>
+    (function () {
+        const budget = {{ selected.request.budget|float }};
+        const rows = document.getElementById("itemRows");
+        function updateTotal() {
+            let total = 0;
+            rows.querySelectorAll(".item-amount").forEach(function (input) { total += parseFloat(input.value) || 0; });
+            document.getElementById("estimateTotal").textContent = total.toLocaleString("en-SG", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const note = document.getElementById("budgetNote");
+            note.textContent = total > budget ? "Over the customer's budget" : "Within the customer's budget";
+            note.className = "small ms-2 " + (total > budget ? "text-danger" : "text-success");
+        }
+        document.getElementById("addItemRow").addEventListener("click", function () {
+            const row = rows.rows[0].cloneNode(true);
+            row.querySelectorAll("input").forEach(function (input) { input.value = ""; });
+            rows.appendChild(row);
+        });
+        rows.addEventListener("click", function (e) {
+            if (e.target.classList.contains("remove-row") && rows.rows.length > 1) {
+                e.target.closest("tr").remove();
+                updateTotal();
+            }
+        });
+        rows.addEventListener("input", updateTotal);
+        updateTotal();
+    })();
+</script>
+{% endif %}
+{% endblock %}
