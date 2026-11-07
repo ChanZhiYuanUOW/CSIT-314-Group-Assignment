@@ -9,6 +9,13 @@ auth_control = UserAuthControl()
 admin_control = AccountAdminControl()
 
 
+@admin_bp.before_request
+def require_user_admin():
+    if "user_id" not in session:
+        return redirect(url_for("auth.authenticateLogin"))
+    if session.get("role") != "User Admin":
+        return "Access denied. User Admin access is required.", 403
+
 def _refresh_human_challenge():
     challenge = auth_control.generateHumanVerificationChallenge()
     session["human_prompt"] = challenge["prompt"]
