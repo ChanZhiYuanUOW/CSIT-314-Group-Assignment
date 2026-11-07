@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+{% set total_views = project_summaries|sum(attribute='views') %}
+{% set total_shortlists = project_summaries|sum(attribute='shortlists') %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0">Monitor Engagement Analytics</h4>
+        <small class="text-muted">Track how many customers view and shortlist each of your project listings.</small>
+    </div>
+    <div>
+        <a href="{{ url_for('discovery.viewFollowerList') }}" class="btn btn-outline-primary btn-sm">View Follower List</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card p-3">
+            <span class="text-muted small">Total Views</span>
+            <h3 class="mb-0">{{ total_views }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card p-3">
+            <span class="text-muted small">Total Shortlists</span>
+            <h3 class="mb-0">{{ total_shortlists }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card p-3">
+            <span class="text-muted small">Overall Shortlist Rate</span>
+            <h3 class="mb-0">{{ ((total_shortlists / total_views * 100) if total_views else 0)|round(1) }}%</h3>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Views / Shortlist Chart</h5>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Reporting period">
+            {% for p in periods %}
+                <a href="{{ url_for('discovery.monitorEngagementAnalytics', period=p) }}"
+                   class="btn {% if p == period %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    {% if project_summaries %}
+        <div style="height: 300px;"><canvas id="engagementChart"></canvas></div>
+    {% else %}
+        <p class="text-muted mb-0">You have no project listings yet, so there is no engagement to chart.</p>
+    {% endif %}
+</div>
+
+<div class="card p-4">
+    <h5 class="mb-3">Engagement by Project</h5>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Project</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th class="text-end">Views</th>
+                    <th class="text-end">Shortlists</th>
+                    <th class="text-end">Shortlist Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in project_summaries %}
+                <tr>
+                    <td><strong>{{ p.title }}</strong></td>
+                    <td>{{ p.category }}</td>
+                    <td><span class="badge bg-secondary">{{ p.publication_status }}</span></td>
+                    <td class="text-end">{{ p.views }}</td>
+                    <td class="text-end">{{ p.shortlists }}</td>
+                    <td class="text-end">{{ p.shortlist_rate }}%</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-muted">No project listings found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if project_summaries %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    const chartData = {{ chart|tojson }};
+    new Chart(document.getElementById("engagementChart"), {
+        type: "bar",
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                { label: "Views", data: chartData.views, backgroundColor: "#3b82f6" },
+                { label: "Shortlists", data: chartData.shortlists, backgroundColor: "#f59e0b" }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
