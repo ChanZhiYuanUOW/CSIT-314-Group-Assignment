@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block content %}
+{% set free_slots = slots|selectattr('is_available', 'equalto', 'True')|list %}
+{% set booked_slots = slots|rejectattr('is_available', 'equalto', 'True')|list %}
+<div class="mb-3">
+    <h4 class="mb-0">Set Consultation Availability</h4>
+    <small class="text-muted">Open one-hour consultation slots so customers can only book times you are free.</small>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card p-3">
+            <span class="text-muted small">Free Upcoming Slots</span>
+            <h3 class="mb-0">{{ free_slots|length }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card p-3">
+            <span class="text-muted small">Booked Consultations</span>
+            <h3 class="mb-0">{{ booked_slots|length }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card p-3">
+            <span class="text-muted small">Next Free Slot</span>
+            <h5 class="mb-0 mt-1">
+                {% if free_slots %}{{ free_slots[0].start_time|friendly_date }}, {{ free_slots[0].start_time|friendly_clock }}{% else %}None{% endif %}
+            </h5>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card p-4">
+            <h5 class="mb-3">Add Availability</h5>
+            <form method="POST" action="{{ url_for('availability.setConsultationAvailability') }}">
+                <input type="hidden" name="form_type" value="add">
+                <div class="mb-3">
+                    <label class="form-label small">Date</label>
+                    <input type="date" name="slot_date" id="slotDate" class="form-control" min="{{ today }}"
+                           value="{{ form.slot_date or '' }}" required>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label class="form-label small">From</label>
+                        <input type="time" name="from_time" id="fromTime" class="form-control" step="3600"
+                               value="{{ form.from_time or '10:00' }}" required>
+                    </div>
+                    <div class="col">
+                        <label class="form-label small">To</label>
+                        <input type="time" name="to_time" id="toTime" class="form-control" step="3600"
+                               value="{{ form.to_time or '12:00' }}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">Repeat</label>
+                    <select name="repeat_weeks" id="repeatWeeks" class="form-select">
+                        <option value="0">Does not repeat</option>
+                        {% for w in range(1, max_repeat_weeks + 1) %}
+                            <option value="{{ w }}" {% if form.repeat_weeks == w|string %}selected{% endif %}>
+                                Weekly for {{ w }} more week{{ 's' if w > 1 }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p class="small text-muted mb-3" id="slotPreview"></p>
+                <button type="submit" class="btn btn-primary w-100">Add Slots</button>
+                <p class="small text-muted mt-3 mb-0">
+                    The time range is split into 1-hour slots between 8:00 AM and 10:00 PM.
+                    Times that overlap slots you already have are skipped.
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <h5 class="mb-3">Upcoming Slots</h5>
+            {% if slots %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <tbody>
+                        {% set ns = namespace(day='') %}
+                        {% for slot in slots %}
+                            {% if slot.start_time[:10] != ns.day %}
+                                {% set ns.day = slot.start_time[:10] %}
+                                <tr class="table-light"><th colspan="3">{{ slot.start_time|friendly_date }}</th></tr>
+                            {% endif %}
+                            <tr>
+                                <td>{{ slot.start_time|friendly_clock }} – {{ slot.end_time|friendly_clock }}</td>
+                                <td>
+                                    {% if slot.is_available == 'True' %}
+                                        <span class="badge bg-success">Free</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Booked</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if slot.is_available == 'True' %}
+                                    <form method="POST" action="{{ url_for('availability.setConsultationAvailability') }}" class="d-inline"
+                                          onsubmit="return confirm('Remove this slot? Customers will no longer be able to book it.');">
+                                        <input type="hidden" name="form_type" value="remove">
+                                        <input type="hidden" name="slot_id" value="{{ slot.slot_id }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                    </form>
+                                    {% else %}
+                                        <small class="text-muted">Consultation confirmed</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-muted mb-0">You have no upcoming availability. Add some slots so customers can book consultations.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Live preview of how many 1-hour slots the form will add
+    function updatePreview() {
+        const preview = document.getElementById("slotPreview");
+        const from = document.getElementById("fromTime").value;
+        const to = document.getElementById("toTime").value;
+        const weeks = parseInt(document.getElementById("repeatWeeks").value, 10) + 1;
+        if (!from || !to) { preview.textContent = ""; return; }
+        const toMinutes = t => parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3, 5), 10);
+        const hours = (toMinutes(to) - toMinutes(from)) / 60;
+        if (hours <= 0 || !Number.isInteger(hours)) {
+            preview.textContent = "Choose a range of whole hours.";
+            return;
+        }
+        const total = hours * weeks;
+        preview.textContent = weeks > 1
+            ? `${hours} slot${hours > 1 ? "s" : ""} a week for ${weeks} weeks (${total} slots).`
+            : `${total} slot${total > 1 ? "s" : ""} will be added.`;
+    }
+    ["fromTime", "toTime", "repeatWeeks"].forEach(id => document.getElementById(id).addEventListener("input", updatePreview));
+    updatePreview();
+</script>
+{% endblock %}
