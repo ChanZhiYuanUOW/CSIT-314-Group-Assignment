@@ -33,6 +33,9 @@
                 {% if session.get('role') == 'User Admin' %}
                     <a href="{{ url_for('admin.manageUserAccounts') }}" class="btn btn-warning btn-sm me-2">User Admin Console</a>
                 {% endif %}
+                {% if session.get('role') == 'Platform Management' %}
+                    <a href="{{ url_for('pm.dashboard') }}" class="btn btn-outline-light btn-sm me-2">Platform Management</a>
+                {% endif %}
                 <a href="{{ url_for('auth.managePersonalProfile') }}" class="btn btn-outline-info btn-sm me-2">My Profile & Preferences</a>
                 <a href="{{ url_for('auth.logOut') }}" class="btn btn-danger btn-sm">Log Out</a>
             {% else %}
