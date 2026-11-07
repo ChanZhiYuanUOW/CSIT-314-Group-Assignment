@@ -1,0 +1,8 @@
+consultation_id,request_id,proposed_time,confirmed_time,status,designer_note,responded_at
+1,2,2026-11-11 14:00:00,,Requested,,
+2,3,2026-11-15 10:00:00,,Requested,,
+3,4,2026-11-12 10:00:00,,Requested,,
+4,5,2026-11-13 16:00:00,,Requested,,
+5,7,2026-11-12 10:00:00,2026-11-12 10:00:00,Accepted,See you at the showroom.,2026-10-23 09:00:00
+6,8,2026-11-08 19:00:00,,Declined,Evening slots are not available; quotation sent instead.,2026-10-21 10:30:00
+7,10,2026-11-10 10:00:00,,Requested,,

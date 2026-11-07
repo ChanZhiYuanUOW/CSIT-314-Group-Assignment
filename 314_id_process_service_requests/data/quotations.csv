@@ -1,0 +1,4 @@
+quotation_id,request_id,total_amount,scope,exclusions,created_at
+1,5,37100.00,"Supply and install vinyl flooring, carpentry, rewiring and painting for the whole unit.","Loose furniture, appliances, curtains.",2026-11-01 15:00:00
+2,6,13600.00,"Living room feature wall, TV console and false ceiling with cove lighting.",Electrical works outside the living room.,2026-11-02 15:00:00
+3,8,13800.00,Master bedroom wardrobe and platform bed with storage.,Mattress and bedding.,2026-11-03 15:00:00
