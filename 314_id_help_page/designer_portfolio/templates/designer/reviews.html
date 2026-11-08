@@ -1,0 +1,11 @@
+{% extends "designer/base.html" %}
+{% block title %}Customer reviews{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">CUSTOMER EXPERIENCE</span><h1>Customer reviews</h1><p class="muted">Read feedback and write a response to each customer.</p></div></div>
+{% for review in reviews %}
+<div class="form-card review-card"><div class="review-heading"><div><span class="eyebrow">CUSTOMER REVIEW</span><h3>{{ review.customer }}</h3></div><span class="stars">★★★★★</span></div>
+<p class="review-text">“{{ review.review }}”</p>
+<form method="post" action="{{ url_for('designer.reply_review', review_id=review.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Your reply</label><textarea name="reply" rows="3" placeholder="Write a thoughtful response...">{{ review.reply or '' }}</textarea><div class="form-footer"><button class="btn primary">Save reply</button></div></form>
+</div>
+{% else %}<div class="empty-state"><h3>No reviews yet</h3><p>Customer reviews will appear here.</p></div>{% endfor %}
+{% endblock %}

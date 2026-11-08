@@ -6,7 +6,14 @@ def create_app():
     app.secret_key = "csit314_314_interior_design_help_key_2026"
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
+
+    from platform_management import init_app
+    init_app(app)
+
+    from designer_portfolio.app import bp as designer_bp
+    app.register_blueprint(designer_bp, url_prefix='/designer')
     return app
+    
 
 if __name__ == "__main__":
     app = create_app()

@@ -1,0 +1,35 @@
+{% extends "designer/base.html" %}
+{% block title %}Dashboard | Designer Studio{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><span class="eyebrow">OVERVIEW</span><h1>Good to see you.</h1>
+  <p class="muted">Manage your projects, showcase your work and connect with customers.</p></div>
+  <a class="btn primary" href="{{ url_for('designer.create_project') }}">＋ Create new listing</a>
+</div>
+<div class="stats">
+  <div class="stat-card"><span>Total projects</span><strong>{{ counts.total }}</strong><small>Across your portfolio</small></div>
+  <div class="stat-card"><span>Published</span><strong>{{ counts.published }}</strong><small>Visible to customers</small></div>
+  <div class="stat-card"><span>Drafts</span><strong>{{ counts.drafts }}</strong><small>Not published yet</small></div>
+  <div class="stat-card"><span>Hidden by platform</span><strong>{{ counts.hidden }}</strong><small>Only visible in your workspace</small></div>
+  <div class="stat-card"><span>Customer reviews</span><strong>{{ counts.reviews }}</strong><small><a href="{{ url_for('designer.reviews') }}">View responses →</a></small></div>
+</div>
+<div class="section-heading"><div><h2>Your project portfolio</h2><p class="muted">Create, edit and organise your published work.</p></div></div>
+<div class="project-grid">
+  {% for project in projects %}
+  <article class="project-card">
+    <div class="project-placeholder"><span>INTERIOR PROJECT</span><b>{{ project.category or 'Design' }}</b></div>
+    <div class="project-info">
+      <div class="card-title-row"><h3>{{ project.title }}</h3><span class="status {{ project.status|lower }}">{{ project.status|title }}</span></div>
+      <p class="muted clamp">{{ project.description or 'No description added yet.' }}</p>
+      <div class="card-meta">{{ project.photo_count }} photos &nbsp;·&nbsp; {{ project.created_at }}</div>
+      <div class="card-actions">
+        <a href="{{ url_for('designer.project_detail', project_id=project.id) }}">Manage listing →</a>
+        {% if project.status in ['draft','published'] %}<a href="{{ url_for('designer.edit_project', project_id=project.id) }}">Edit</a>{% endif %}
+      </div>
+    </div>
+  </article>
+  {% else %}
+  <div class="empty-state"><h3>No projects yet</h3><p>Create your first project listing to start building your portfolio.</p><a class="btn primary" href="{{ url_for('designer.create_project') }}">Create a project</a></div>
+  {% endfor %}
+</div>
+{% endblock %}

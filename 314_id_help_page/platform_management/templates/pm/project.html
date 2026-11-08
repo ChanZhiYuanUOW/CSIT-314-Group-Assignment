@@ -1,0 +1,11 @@
+{% extends 'pm/base.html' %}{% from 'pm/macros.html' import csrf with context %}{% block content %}<h1>{{ item.title }}</h1><div class="columns"><section class="card"><span class="badge">{{ item.status }}</span><h2>Project details</h2><p class="preserve">{{ item.description }}</p><dl><dt>Category</dt><dd>{{ item.category }}</dd><dt>Designer</dt><dd>{{ item.designer }}</dd></dl></section><section class="card"><h2>Featured placement</h2>
+{% for booking in bookings %}
+<p><a href="{{ url_for('pm.schedule_edit', pk=booking.id) }}">Slot {{ booking.slot }} · {{ booking.display_state|title }}</a><br>{{ booking.start_local }} to {{ booking.end_local }} (Singapore time)</p>
+{% else %}<p>No current or upcoming placement for this project.</p>{% endfor %}
+{% if item.status == 'published' %}
+<form method="post">{{ csrf() }}
+<p>Choose when this project appears in a featured slot.</p>
+{% with item=none %}{% include 'pm/booking_fields.html' %}{% endwith %}
+</form>
+{% else %}<p>Only published projects can appear in a featured slot.</p>{% endif %}
+</section></div>{% endblock %}

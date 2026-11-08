@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Photo gallery{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">PROJECT / GALLERY</span><h1>Photo gallery</h1><p class="muted">Upload before-and-after photos and arrange their display order.</p></div><a class="btn light" href="{{ url_for('project_detail', project_id=project.id) }}">← Back to project</a></div>
+<form class="form-card upload-form" method="post" enctype="multipart/form-data">
+  <h2>Upload photos</h2><label>Photo type</label><select name="photo_type"><option>After</option><option>Before</option></select>
+  <label>Select image files</label><input type="file" name="photos" accept="image/*" multiple required>
+  <p class="hint">Accepted formats: PNG, JPG, JPEG, GIF and WEBP.</p><button class="btn primary">Upload photos</button>
+</form>
+<h2 class="section-title">Arrange gallery</h2>
+<div class="photo-grid manage-grid">
+{% for photo in photos %}
+<div class="photo-tile"><img src="{{ url_for('static', filename='uploads/' + photo.filename) }}" alt="Project photo"><div class="photo-controls"><span>{{ photo.photo_type }}</span><div class="inline-actions">
+<form method="post" action="{{ url_for('move_photo', photo_id=photo.id, direction='up') }}"><button class="mini-btn" title="Move up">↑</button></form>
+<form method="post" action="{{ url_for('move_photo', photo_id=photo.id, direction='down') }}"><button class="mini-btn" title="Move down">↓</button></form>
+<form method="post" action="{{ url_for('delete_photo', photo_id=photo.id) }}" onsubmit="return confirm('Delete this photo?')"><button class="mini-btn delete">×</button></form>
+</div></div></div>
+{% else %}<p class="muted">Your gallery is empty. Upload some project photos above.</p>{% endfor %}
+</div>
+{% endblock %}

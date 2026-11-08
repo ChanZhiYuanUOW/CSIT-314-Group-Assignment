@@ -1,0 +1,1 @@
+{% if pages>1 %}<div class="pagination">{% if page>1 %}<a class="button secondary" href="{{ previous }}">Previous</a>{% endif %}<span>Page {{ page }} of {{ pages }}</span>{% if page<pages %}<a class="button secondary" href="{{ next_page }}">Next</a>{% endif %}</div>{% endif %}
