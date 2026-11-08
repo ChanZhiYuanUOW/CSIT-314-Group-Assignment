@@ -56,7 +56,7 @@
             <p class="text-muted small mb-3">
                 For <strong>{{ selected.customer.full_name if selected.customer else 'Unknown customer' }}</strong>
                 {% if selected.customer %}({{ selected.customer.email }}, {{ selected.customer.phone }}){% endif %}
-                · From service request #{{ project.source_request_id }} · Last updated {{ project.updated_at|friendly_time }}
+                · From service request #{{ project.source_request_id }} · Last updated {{ project.updated_at|renovation_time }}
             </p>
             {% if req %}
                 <p class="mb-2">{{ req.renovation_brief }}</p>
@@ -87,7 +87,7 @@
                 <tbody>
                     {% for m in selected.milestones %}
                     <tr><td>{{ m.description }}</td><td><span class="badge {{ milestone_badge[m.status] }}">{{ m.status }}</span></td>
-                        <td class="small text-muted">{{ m.recorded_at|friendly_time }}</td></tr>
+                        <td class="small text-muted">{{ m.recorded_at|renovation_time }}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -133,7 +133,7 @@
                                     {% endfor %}
                                 </select>
                             </td>
-                            <td class="small text-muted">{{ m.recorded_at|friendly_time }}</td>
+                            <td class="small text-muted">{{ m.recorded_at|renovation_time }}</td>
                         </tr>
                         {% else %}
                         <tr><td colspan="3" class="text-muted small">No milestones yet. Add at least one below.</td></tr>

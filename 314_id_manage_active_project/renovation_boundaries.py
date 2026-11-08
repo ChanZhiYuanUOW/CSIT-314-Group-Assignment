@@ -16,7 +16,7 @@ def _friendlyDate(value: str) -> str:
         return value or ""
 
 
-@renovation_bp.app_template_filter("friendly_time")
+@renovation_bp.app_template_filter("renovation_time")
 def _friendlyTime(value: str) -> str:
     """'2026-11-05 18:20:00' -> '05 Nov 2026, 6:20 PM'"""
     try:
