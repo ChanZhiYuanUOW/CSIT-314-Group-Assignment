@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Company profile{% endblock %}
+{% block content %}
+<div class="page-heading"><div><span class="eyebrow">STUDIO SETTINGS</span><h1>Company profile</h1><p class="muted">Keep your studio information up to date.</p></div></div>
+<form method="post" class="form-card">
+<label>Company / studio name</label><input name="name" value="{{ company.name or '' }}" required>
+<label>About your company</label><textarea name="description" rows="4">{{ company.description or '' }}</textarea>
+<div class="form-row"><div><label>Email</label><input type="email" name="email" value="{{ company.email or '' }}"></div><div><label>Phone</label><input name="phone" value="{{ company.phone or '' }}"></div></div>
+<label>Location</label><input name="location" value="{{ company.location or '' }}">
+<div class="form-footer"><button class="btn primary">Save company profile</button></div>
+</form>
+{% endblock %}
