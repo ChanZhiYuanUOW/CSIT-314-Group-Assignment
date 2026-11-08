@@ -10,6 +10,8 @@ def create_app():
     from platform_management import init_app
     init_app(app)
 
+    from designer_portfolio.app import bp as designer_bp
+    app.register_blueprint(designer_bp, url_prefix='/designer')
     return app
     
 
