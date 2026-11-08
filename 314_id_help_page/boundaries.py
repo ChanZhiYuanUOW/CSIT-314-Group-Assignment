@@ -9,6 +9,13 @@ auth_control = UserAuthControl()
 admin_control = AccountAdminControl()
 
 
+@admin_bp.before_request
+def require_user_admin():
+    if "user_id" not in session:
+        return redirect(url_for("auth.authenticateLogin"))
+    if session.get("role") != "User Admin":
+        return "Access denied. User Admin access is required.", 403
+
 def _refresh_human_challenge():
     challenge = auth_control.generateHumanVerificationChallenge()
     session["human_prompt"] = challenge["prompt"]
@@ -43,41 +50,8 @@ class UserAuthBoundary:
             "listed_businesses": len(listed_biz_list)
         }
 
-        featured_projects = [
-            {
-                "idp_id": 101,
-                "title": "Japandi 4-Room HDB at Bidadari Park Drive",
-                "designer": "Chloe Tan Studio",
-                "style": "Japandi",
-                "property_type": "4-Room HDB",
-                "estimated_cost_sgd": "48,000",
-                "views_count": 1420,
-                "shortlist_count": 38,
-                "image_url": "https://picsum.photos/seed/idp101/600/400"
-            },
-            {
-                "idp_id": 102,
-                "title": "Modern Luxury Executive Condo at Tampines St 81",
-                "designer": "Lim & Co Design Works",
-                "style": "Modern Luxury",
-                "property_type": "Executive Condo",
-                "estimated_cost_sgd": "85,000",
-                "views_count": 980,
-                "shortlist_count": 29,
-                "image_url": "https://picsum.photos/seed/idp102/600/400"
-            },
-            {
-                "idp_id": 103,
-                "title": "Scandinavian 5-Room HDB at Punggol Walk",
-                "designer": "Spaces SG Atelier",
-                "style": "Scandinavian",
-                "property_type": "5-Room HDB",
-                "estimated_cost_sgd": "56,000",
-                "views_count": 1150,
-                "shortlist_count": 44,
-                "image_url": "https://picsum.photos/seed/idp103/600/400"
-            }
-        ]
+        from platform_management.home_adapter import featured_home_cards
+        featured_projects = featured_home_cards()
 
         return render_template(
             "home.html",
