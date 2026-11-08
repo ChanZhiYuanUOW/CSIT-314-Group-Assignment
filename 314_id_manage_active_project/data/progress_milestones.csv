@@ -1,0 +1,16 @@
+milestone_id,renovation_id,description,status,recorded_at
+1,1,Site protection and measurement,Completed,2026-10-26 10:15:00
+2,1,False ceiling and cove lighting,Completed,2026-11-03 17:40:00
+3,1,Fluted feature wall,In Progress,2026-11-05 18:20:00
+4,1,Built-in TV console installation,Pending,2026-10-26 10:15:00
+5,1,Final cleaning and handover,Pending,2026-10-26 10:15:00
+6,2,Final site measurement,Pending,2026-10-30 11:00:00
+7,2,Wardrobe and platform bed fabrication,Pending,2026-10-30 11:00:00
+8,2,On-site installation,Pending,2026-10-30 11:00:00
+9,2,Handover and defects check,Pending,2026-10-30 11:00:00
+10,3,Concept and mood board,Completed,2026-10-29 15:30:00
+11,3,3D renders approved by customer,Completed,2026-11-02 16:45:00
+12,3,Condo management renovation permit,In Progress,2026-11-02 16:45:00
+13,3,Hacking and masonry works,Pending,2026-10-28 09:00:00
+14,3,Carpentry and fittings,Pending,2026-10-28 09:00:00
+15,3,Handover,Pending,2026-10-28 09:00:00
