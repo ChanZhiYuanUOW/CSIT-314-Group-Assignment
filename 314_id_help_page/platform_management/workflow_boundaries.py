@@ -27,7 +27,12 @@ class ModerationCaseBoundary:
         c=M(g.pm_user['user_id'])
         if request.method=='POST':
             flash(f'Grouped {c.sync()} new reports into cases.');return redirect(url_for('pm.cases'))
-        return render_template('pm/cases.html',**paginate(c.cases()))
+        rows = c.cases()
+        categories = sorted({row['violation_category'] for row in rows})
+        category = request.args.get('category', '')
+        if category:
+            rows = [row for row in rows if row['violation_category'] == category]
+        return render_template('pm/cases.html', categories=categories, category=category, **paginate(rows))
 
     @staticmethod
     @bp.route('/cases/<int:pk>',methods=['GET','POST'])

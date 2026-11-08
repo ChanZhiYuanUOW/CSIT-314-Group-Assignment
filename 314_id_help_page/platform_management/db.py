@@ -20,8 +20,13 @@ def init_db():
     if 'restriction_version' not in columns:
         db.execute('ALTER TABLE projects ADD COLUMN restriction_version INTEGER NOT NULL DEFAULT 0')
         db.commit()
+    if 'tags' not in columns:
+        db.execute("ALTER TABLE projects ADD COLUMN tags TEXT NOT NULL DEFAULT ''")
+    db.executescript((Path(__file__).resolve().parents[1] / 'designer_portfolio' / 'schema.sql').read_text())
     with (Path(__file__).parent / 'workflow_schema.sql').open() as file:
         db.executescript(file.read())
+    from .violation_categories import upgrade_cases
+    upgrade_cases(db)
 
 
 def init_app(app):

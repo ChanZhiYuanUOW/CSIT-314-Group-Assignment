@@ -1,7 +1,8 @@
 """Boundary layer: HTTP input/output. Business operations go through controls."""
 from urllib.parse import urlencode
 from flask import Blueprint,request,g,render_template,redirect,url_for,flash,abort,current_app
-from .access import manager_required
+from .access import manager_required, current_manager
+from .violation_categories import CATEGORIES
 from .controls import PlatformManagementControl,PublicProjectControl
 
 bp=Blueprint('pm',__name__,template_folder='templates',static_folder='static',static_url_path='/static')
@@ -86,13 +87,22 @@ class PlatformManagementBoundary:
     @bp.route('/projects/<int:pk>',methods=['GET','POST'],endpoint='project_action')
     @manager_required
     def moderateProject(pk):
-        c=control();item=required(c.getProject(pk))
-        if request.method=='POST':
+        from .workflow_controls import FeatureScheduleControl
+        c = FeatureScheduleControl(g.pm_user['user_id'])
+        item = required(c.getProject(pk))
+        if request.method == 'POST':
             try:
-                c.moderateProject(pk,request.form.get('action',''),request.form.get('reason',''))
-                flash('Project updated.');return redirect(url_for('pm.projects'))
-            except ValueError as exc: flash(str(exc),'error')
-        return render_template('pm/project.html',item=item)
+                data = request.form.to_dict()
+                data['project_id'] = pk
+                c.save(data)
+            except ValueError as exc:
+                flash(str(exc), 'error')
+            else:
+                flash(f"Featured placement scheduled for {item['title']}.")
+                return redirect(url_for('pm.project_action', pk=pk))
+        bookings = [r for r in c.schedules() if r['project_id'] == pk
+                    and r['display_state'] in ('active', 'upcoming', 'suppressed')]
+        return render_template('pm/project.html', item=item, bookings=bookings)
 
     @staticmethod
     @bp.get('/content-reports',endpoint='content_reports')
@@ -108,10 +118,19 @@ class PlatformManagementBoundary:
         c=control();item=required(c.getContentReport(pk))
         if request.method=='POST':
             try:
-                c.reviewReportedContent(pk,request.form.get('action',''),request.form.get('reason',''))
-                flash('Decision recorded.');return redirect(url_for('pm.content_reports'))
+                c.reviewReportedContent(pk, request.form.get('action', ''), request.form.get('reason', ''),
+                                        request.form.get('report_ids', ''))
+                if request.form.get('action') != 'claim':
+                    flash('Decision recorded.')
+                return redirect(url_for('pm.review_report', pk=pk))
             except ValueError as exc: flash(str(exc),'error')
-        return render_template('pm/review.html',item=item)
+        from .workflow_entities import WorkflowEntity
+        from .workflow_controls import ModerationWorkflowControl
+        case_id = WorkflowEntity.report_case_id(pk)
+        case, reports = None, []
+        if case_id:
+            case, _, reports = ModerationWorkflowControl(g.pm_user['user_id']).case(case_id)
+        return render_template('pm/review.html',item=required(c.getContentReport(pk)),case=case,reports=reports)
 
     @staticmethod
     @bp.get('/audit',endpoint='activity')
@@ -139,4 +158,23 @@ class PlatformManagementBoundary:
     @staticmethod
     @bp.get('/gallery',endpoint='gallery')
     def viewPublishedProjects():
-        return render_template('pm/gallery.html',**paginate(PublicProjectControl.viewPublishedProjects()))
+        user = current_manager()
+        return render_template('pm/gallery.html', can_report=bool(user and user['role'] == 'Customer'),
+                               categories=CATEGORIES, **paginate(PublicProjectControl.viewPublishedProjects()))
+
+    @staticmethod
+    @bp.post('/gallery/<int:pk>/report', endpoint='submit_report')
+    def submitReport(pk):
+        user = current_manager()
+        if not user:
+            return redirect(url_for('auth.authenticateLogin'))
+        if user['role'] != 'Customer':
+            abort(403)
+        try:
+            PublicProjectControl.reportProject(pk, user['user_id'], request.form.get('category', ''),
+                                               request.form.get('evidence', '').strip())
+        except ValueError as exc:
+            flash(str(exc), 'error')
+        else:
+            flash('Report submitted for moderation.')
+        return redirect(url_for('pm.gallery', page=request.args.get('page', 1, type=int)))

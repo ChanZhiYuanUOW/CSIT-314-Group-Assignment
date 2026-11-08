@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS moderation_cases (
  decision TEXT CHECK(decision IN ('dismiss','hide','remove')), reason TEXT NOT NULL DEFAULT '',
  previous_status TEXT, restriction_version INTEGER, created_at TEXT NOT NULL, resolved_at TEXT
 );
-CREATE UNIQUE INDEX IF NOT EXISTS one_active_case ON moderation_cases(project_id) WHERE state!='resolved';
+-- The active-case index is installed by upgrade_cases after upgrading existing databases.
 CREATE TABLE IF NOT EXISTS case_reports (
  report_id INTEGER PRIMARY KEY REFERENCES content_reports(id), case_id INTEGER NOT NULL REFERENCES moderation_cases(id)
 );

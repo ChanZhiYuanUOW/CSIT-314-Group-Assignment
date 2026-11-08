@@ -1,5 +1,6 @@
 """Persistence and atomic state transitions for cases, appeals and schedules."""
 from .db import get_db
+from .violation_categories import report_category
 from .entities import PlatformData,utc_now
 
 
@@ -21,25 +22,69 @@ class WorkflowEntity:
 
     @classmethod
     def syncReports(cls,actor):
-        db=get_db();count=0
+        db=get_db()
         with db:
             db.execute('BEGIN IMMEDIATE')
-            reports=db.execute("SELECT r.* FROM content_reports r LEFT JOIN case_reports cr ON cr.report_id=r.id WHERE cr.report_id IS NULL AND r.status='open' ORDER BY r.id").fetchall()
-            for r in reports:
-                case=db.execute("SELECT id FROM moderation_cases WHERE project_id=? AND state!='resolved'",(r['project_id'],)).fetchone()
-                cid=case['id'] if case else db.execute('INSERT INTO moderation_cases(project_id,created_at) VALUES(?,?)',(r['project_id'],utc_now())).lastrowid
-                db.execute('INSERT INTO case_reports(report_id,case_id) VALUES(?,?)',(r['id'],cid));count+=1
-                n=db.execute('SELECT COUNT(*) FROM case_reports WHERE case_id=?',(cid,)).fetchone()[0]
-                if n>=3: db.execute("UPDATE moderation_cases SET priority='high' WHERE id=? AND priority='normal'",(cid,))
-            if count: cls.audit(db,actor,'group_reports','Moderation cases',f'Grouped {count} unassigned reports.')
+            return cls._group_reports(db, actor)
+
+    @classmethod
+    def _group_reports(cls, db, actor, project_id=None, category_filter=None):
+        count = 0
+        query = ("SELECT r.* FROM content_reports r LEFT JOIN case_reports cr ON cr.report_id=r.id "
+                 "WHERE cr.report_id IS NULL AND r.status='open'")
+        params = ()
+        if project_id is not None:
+            query += ' AND r.project_id=?'
+            params = (project_id,)
+        reports = db.execute(query + ' ORDER BY r.id', params).fetchall()
+        for r in reports:
+            category = report_category(r['reason'])
+            if category_filter and category != category_filter:
+                continue
+            case = db.execute(
+                "SELECT id FROM moderation_cases WHERE project_id=? AND violation_category=? AND state!='resolved'",
+                (r['project_id'], category)
+            ).fetchone()
+            cid=case['id'] if case else db.execute('INSERT INTO moderation_cases(project_id,violation_category,created_at) VALUES(?,?,?)',(r['project_id'],category,utc_now())).lastrowid
+            db.execute('INSERT INTO case_reports(report_id,case_id) VALUES(?,?)',(r['id'],cid));count+=1
+            n=db.execute('SELECT COUNT(*) FROM case_reports WHERE case_id=?',(cid,)).fetchone()[0]
+            if n>=3: db.execute("UPDATE moderation_cases SET priority='high' WHERE id=? AND priority='normal'",(cid,))
+        if count: cls.audit(db,actor,'group_reports','Moderation cases',f'Grouped {count} unassigned reports.')
         return count
 
     @classmethod
-    def caseAction(cls,actor,pk,action,reason,priority='normal'):
+    def start_report_review(cls, actor, report_id):
+        db = get_db()
+        with db:
+            db.execute('BEGIN IMMEDIATE')
+            report = db.execute('SELECT * FROM content_reports WHERE id=?', (report_id,)).fetchone()
+            if not report or report['status'] != 'open':
+                raise ValueError('This report is no longer open.')
+            cls._group_reports(db, actor, report['project_id'], report_category(report['reason']))
+            case_id = cls.report_case_id(report_id)
+            case = cls.row('moderation_cases', case_id)
+            if case['assigned_to'] and case['assigned_to'] != str(actor):
+                raise ValueError('Another manager is reviewing this case.')
+            if case['state'] == 'open':
+                db.execute("UPDATE moderation_cases SET assigned_to=?, state='under_review' WHERE id=?", (str(actor), case_id))
+                cls.audit(db, actor, 'case_claim', f'Case #{case_id}', 'Started review from reported content.')
+
+    @staticmethod
+    def report_case_id(report_id):
+        row = get_db().execute('SELECT case_id FROM case_reports WHERE report_id=?', (report_id,)).fetchone()
+        return row['case_id'] if row else None
+
+
+    @classmethod
+    def caseAction(cls,actor,pk,action,reason,priority='normal',report_ids=None):
         db=get_db()
         with db:
             db.execute('BEGIN IMMEDIATE')
             case=cls.row('moderation_cases',pk)
+            if report_ids is not None:
+                members = db.execute('SELECT report_id FROM case_reports WHERE case_id=? ORDER BY report_id', (pk,))
+                if report_ids != ','.join(str(row[0]) for row in members):
+                    raise ValueError('The reports in this case changed. Review the updated evidence before deciding.')
             if case['state']=='resolved': raise ValueError('This case is already resolved.')
             if action=='claim':
                 if case['state']=='awaiting_response': raise ValueError('Wait for the designer response before continuing review.')

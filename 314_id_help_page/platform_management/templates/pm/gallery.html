@@ -1,1 +1,13 @@
-{% extends 'pm/base.html' %}{% block content %}<p class="eyebrow">PUBLIC INTEGRATION PREVIEW</p><h1>Spaces to inspire.</h1><p class="intro">Published projects only, with featured projects first. Text placeholders demonstrate visibility; your team's browsing module supplies the full gallery.</p><div class="gallery">{% for item in items %}<article class="card"><div class="project-art" aria-hidden="true">{{ item.category[0] }}</div>{% if item.featured %}<p class="badge">Featured</p>{% endif %}<h2>{{ item.title }}</h2><p class="muted">{{ item.category }}</p><p>{{ item.description }}</p></article>{% else %}<p>No published projects.</p>{% endfor %}</div>{% include 'pm/pagination.html' %}{% endblock %}
+{% extends 'pm/base.html' %}{% from 'pm/macros.html' import csrf %}{% block content %}<p class="eyebrow">PUBLIC INTEGRATION PREVIEW</p><h1>Spaces to inspire.</h1><p class="intro">Published projects only, with featured projects first. Text placeholders demonstrate visibility; your team's browsing module supplies the full gallery.</p><div class="gallery">{% for item in items %}<article class="card"><div class="project-art" aria-hidden="true">{{ item.category[0] }}</div>{% if item.featured %}<p class="badge">Featured</p>{% endif %}<h2>{{ item.title }}</h2><p class="muted">{{ item.category }}</p><p>{{ item.description }}</p>{% if can_report %}
+<details><summary>Report project</summary>
+<form method="post" action="{{ url_for('pm.submit_report', pk=item.id, page=page) }}">
+{{ csrf() }}
+<label for="category-{{ item.id }}">Violation category</label>
+<select id="category-{{ item.id }}" name="category" required>
+<option value="">Choose a category</option>
+{% for category in categories %}<option>{{ category }}</option>{% endfor %}
+</select>
+<label for="details-{{ item.id }}">Details (optional)</label>
+<textarea id="details-{{ item.id }}" name="evidence" maxlength="1000"></textarea>
+<button>Submit report</button>
+</form></details>{% endif %}</article>{% else %}<p>No published projects.</p>{% endfor %}</div>{% include 'pm/pagination.html' %}{% endblock %}

@@ -63,9 +63,16 @@ class PlatformManagementControl:
         self.authorize()
         raise ValueError('Use Moderation Cases for restrictions and Featured Schedule for homepage placement.')
 
-    def reviewReportedContent(self,pk,action,reason):
+    def reviewReportedContent(self, pk, action, reason, report_ids):
         self.authorize()
-        raise ValueError('Group this report into a Moderation Case and resolve the case.')
+        from .workflow_entities import WorkflowEntity
+        if action == 'claim':
+            WorkflowEntity.start_report_review(self.user_id, pk)
+            return
+        case_id = WorkflowEntity.report_case_id(pk)
+        if not case_id or action not in ('dismiss', 'hide', 'remove'):
+            raise ValueError('Start the review before submitting a decision.')
+        WorkflowEntity.caseAction(self.user_id, case_id, action, self.reason(reason), report_ids=report_ids)
 
     def reportFilters(self,args):
         self.authorize()
@@ -87,7 +94,10 @@ class PlatformManagementControl:
             return day-timedelta(days=day.weekday()) if data['period']=='weekly' else day.replace(day=1) if data['period']=='monthly' else day
         rows={};day=data['start']
         while day<=data['end']:
-            key=bucket(day);rows.setdefault(key,dict(date=str(key),projects=0,views=0,shortlists=0,reports=0));day+=timedelta(days=1)
+            key = bucket(day)
+            row = rows.setdefault(key, dict(date=str(day), projects=0, views=0, shortlists=0, reports=0))
+            row['end_date'] = str(day)
+            day += timedelta(days=1)
         start=datetime.combine(data['start'],datetime.min.time(),LOCAL_TZ).astimezone(timezone.utc).isoformat(timespec='seconds')
         stop=datetime.combine(data['end']+timedelta(days=1),datetime.min.time(),LOCAL_TZ).astimezone(timezone.utc).isoformat(timespec='seconds')
         for stamp,field in PlatformData.reportEvents(start,stop,data['category']):
@@ -99,6 +109,23 @@ class PlatformManagementControl:
 
 
 class PublicProjectControl:
+    @staticmethod
+    def reportProject(project_id, customer_id, category, evidence):
+        from .violation_categories import CATEGORIES
+        from .db import get_db
+        from .entities import utc_now
+        if category not in CATEGORIES or len(evidence) > 1000:
+            raise ValueError('Choose a listed violation category and limit details to 1000 characters.')
+        db = get_db()
+        with db:
+            result = db.execute(
+                "INSERT INTO content_reports(project_id, reporter_id, reason, evidence, created_at) "
+                "SELECT id, ?, ?, ?, ? FROM projects WHERE id=? AND status='published'",
+                (customer_id, category, evidence, utc_now(), project_id)
+            )
+            if not result.rowcount:
+                raise ValueError('This project is no longer published.')
+
     @staticmethod
     def viewPublishedProjects():
         from .workflow_entities import WorkflowEntity

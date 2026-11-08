@@ -12,7 +12,7 @@ class ModerationWorkflowControl(PlatformManagementControl):
     def sync(self): self.authorize();return E.syncReports(self.user_id)
     def cases(self):
         self.authorize()
-        return PlatformData.rows("SELECT c.*,p.title,(SELECT COUNT(*) FROM case_reports cr WHERE cr.case_id=c.id) AS reports FROM moderation_cases c JOIN projects p ON p.id=c.project_id ORDER BY CASE c.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END,c.created_at DESC,c.id DESC")
+        return PlatformData.rows("SELECT c.*,p.title,(SELECT COUNT(*) FROM case_reports cr WHERE cr.case_id=c.id) AS reports FROM moderation_cases c JOIN projects p ON p.id=c.project_id ORDER BY c.violation_category, CASE WHEN c.state='resolved' THEN 1 ELSE 0 END, CASE c.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END,c.created_at DESC,c.id DESC")
     def case(self,pk):
         self.authorize();case=E.row('moderation_cases',pk)
         return case,E.row('projects',case['project_id']),PlatformData.rows('SELECT r.* FROM content_reports r JOIN case_reports cr ON cr.report_id=r.id WHERE cr.case_id=? ORDER BY r.id',(pk,))
@@ -21,11 +21,13 @@ class ModerationWorkflowControl(PlatformManagementControl):
         if priority not in ('normal','high','urgent'): raise ValueError('Invalid priority.')
         E.caseAction(self.user_id,pk,action,self.reason(reason),priority)
     def appeals(self):
-        self.authorize();return PlatformData.rows('SELECT a.*,p.title FROM project_appeals a JOIN moderation_cases c ON c.id=a.case_id JOIN projects p ON p.id=c.project_id ORDER BY a.id DESC')
+        self.authorize();return PlatformData.rows("SELECT a.*,p.title FROM project_appeals a JOIN moderation_cases c ON c.id=a.case_id JOIN projects p ON p.id=c.project_id ORDER BY CASE WHEN a.state IN ('pending','under_review') THEN 0 ELSE 1 END,a.id DESC")
     def appeal(self,pk):
         self.authorize();a=E.row('project_appeals',pk);return a,self.case(a['case_id'])
     def decide(self,pk,action,reason):
-        self.authorize();E.appealAction(self.user_id,pk,action,self.reason(reason))
+        self.authorize()
+        note = 'Started appeal review.' if action == 'claim' else self.reason(reason)
+        E.appealAction(self.user_id, pk, action, note)
 
 
 class DesignerAppealControl:
