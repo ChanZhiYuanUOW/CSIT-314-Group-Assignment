@@ -1,0 +1,19 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import project_card, compare_tray, customer_nav with context %}
+{% block content %}
+{{ customer_nav('recommended') }}
+<h3 class="fw-bold mb-1">{{ 'Recommended for you' if rec.personalised else 'Popular projects' }}</h3>
+<p class="text-muted">
+  {% if rec.personalised %}Based on the projects you have viewed. The more you browse, the better these get.
+  {% else %}Browse a few projects and we will tailor suggestions to your taste. Until then, here is what is popular.{% endif %}
+</p>
+{{ compare_tray() }}
+{% if rec['items'] %}
+<div class="row g-3">{% for p in rec['items'] %}{{ project_card(p, request.path, reason=p.reason) }}{% endfor %}</div>
+{% else %}
+<div class="card"><div class="card-body text-center py-5">
+  <h6 class="fw-bold">No recommendations available yet</h6>
+  <a class="btn btn-primary" href="{{ url_for('customer.browsePlatformProjects') }}">Browse projects</a>
+</div></div>
+{% endif %}
+{% endblock %}

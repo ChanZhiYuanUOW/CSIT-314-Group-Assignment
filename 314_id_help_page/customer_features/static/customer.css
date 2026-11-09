@@ -1,0 +1,8 @@
+/* Customer feature pages. Loaded by base-extending templates via {{ url_for('customer.static', filename='customer.css') }} */
+.cf-card { transition: transform .12s ease, box-shadow .12s ease; }
+.cf-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.10); }
+.cf-card .card-title a:hover { color: #0d6efd !important; }
+.cf-reason { color: #0d6efd; font-size: .8rem; }
+.cf-compare th, .cf-compare td { vertical-align: top; }
+.cf-compare tr.table-warning > * { --bs-table-bg: #fff8e1; }
+.cf-tray { position: sticky; top: .5rem; z-index: 5; }

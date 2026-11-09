@@ -1,0 +1,24 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import project_card, compare_tray, customer_nav with context %}
+{% block content %}
+{{ customer_nav('recent') }}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold mb-0">Recently viewed projects</h3>
+  {% if projects %}
+  <form method="post" action="{{ url_for('customer.clearRecentlyViewed') }}" onsubmit="return confirm('Clear your whole viewing history?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline-danger btn-sm">Clear history</button>
+  </form>
+  {% endif %}
+</div>
+{{ compare_tray() }}
+{% if projects %}
+<div class="row g-3">{% for p in projects %}{{ project_card(p, request.path, removable=True) }}{% endfor %}</div>
+{% else %}
+<div class="card"><div class="card-body text-center py-5">
+  <h6 class="fw-bold">You have not viewed any projects yet</h6>
+  <p class="text-muted">Projects you open will appear here so you can find them again.</p>
+  <a class="btn btn-primary" href="{{ url_for('customer.browsePlatformProjects') }}">Browse projects</a>
+</div></div>
+{% endif %}
+{% endblock %}
