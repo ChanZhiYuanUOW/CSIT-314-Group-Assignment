@@ -16,6 +16,14 @@
     <a href="{{ url_for('designer.create_project') }}">＋ &nbsp; New project</a>
     <a href="{{ url_for('designer.company_profile') }}">◉ &nbsp; Company profile</a>
     <a href="{{ url_for('designer.reviews') }}">☆ &nbsp; Customer reviews</a>
+    
+    <br>
+    <p class="side-label">CLIENT STUFF</p>
+    <a href="{{ url_for('renovation.manageActiveProject') }}">x &nbsp; Active renovations</a>
+    <a href="{{ url_for('availability.setConsultationAvailability') }}">x &nbsp; Consultation availability</a>
+    <a href="{{ url_for('service_request.processServiceRequest') }}">x &nbsp; Service requests</a>
+    <a href="{{ url_for('discovery.monitorEngagementAnalytics') }}">x &nbsp; Engagement analytics</a>
+    
     <div class="sidebar-bottom">Interior Designer<br><small>Portfolio manager</small></div>
   </aside>
   <main class="main">

@@ -1,0 +1,11 @@
+request_id,customer_user_id,designer_user_id,renovation_brief,budget,request_type,status,submitted_at
+1,141,2,Full kitchen and living room renovation for a 4-Room HDB at Bidadari. Want a Japandi look with built-in storage and new vinyl flooring.,35000.00,Quotation,Pending,2026-11-06 20:14:00
+2,167,2,Recently collected keys to a 3-Room BTO in Tengah. Would like to discuss an overall layout and theme before committing.,25000.00,Consultation,Pending,2026-11-05 09:41:00
+3,193,2,Hacking and redoing two bathrooms in a resale 5-Room HDB in Punggol. Need waterproofing and new fittings.,28000.00,Quotation & Consultation,Pending,2026-11-07 13:02:00
+4,194,2,Converting the study room of our condo at Tampines into a nursery. Looking for advice on safe materials and carpentry.,15000.00,Consultation,Pending,2026-11-04 18:25:00
+5,212,2,"Whole-unit renovation of a 4-Room HDB in Sengkang: flooring, carpentry, electrical rewiring and painting.",60000.00,Quotation & Consultation,In Progress,2026-10-30 11:37:00
+6,138,2,"Feature wall, TV console and false ceiling with cove lighting for the living room of a 5-Room HDB in Woodlands.",18000.00,Quotation,Responded,2026-10-24 16:50:00
+7,154,2,Planning a modern luxury theme for a new Executive Condo at Canberra. Want to discuss scope and timeline.,90000.00,Consultation,Responded,2026-10-22 10:05:00
+8,206,2,Master bedroom wardrobe and platform bed for a 4-Room HDB in Bukit Batok.,20000.00,Quotation & Consultation,Responded,2026-10-20 21:18:00
+9,209,25,Shop-house office fit-out for a small studio on Joo Chiat Road.,75000.00,Quotation,Pending,2026-11-03 14:30:00
+10,201,25,Landed terrace extension; would like an initial consultation on layout options.,85000.00,Consultation,Pending,2026-11-02 08:55:00

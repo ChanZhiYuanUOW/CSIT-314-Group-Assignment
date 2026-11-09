@@ -1,0 +1,9 @@
+# Combined dependencies for the whole site
+# from 314_id_help_page/requirements.txt and 314_id_manage_projects/interior_designer_flask/requirements.txt
+
+Flask>=3.1,<3.2
+Werkzeug>=3.0
+Flask-WTF>=1.2,<1.3
+reportlab>=4.4,<5
+tzdata>=2025.1
+pytest>=8,<10

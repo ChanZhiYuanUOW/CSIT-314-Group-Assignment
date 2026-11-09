@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block content %}
+{% set project_badge = {'Not Started': 'bg-secondary', 'In Progress': 'bg-primary', 'On Hold': 'bg-warning text-dark',
+                        'Completed': 'bg-success'} %}
+{% set milestone_badge = {'Pending': 'bg-light text-dark border', 'In Progress': 'bg-info text-dark', 'Completed': 'bg-success'} %}
+<div class="mb-3">
+    <h4 class="mb-0">Manage Active Projects</h4>
+    <small class="text-muted">Keep customers informed by recording progress milestones and the expected completion date of each renovation.</small>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card p-3">
+            <form method="GET" action="{{ url_for('renovation.manageActiveProject') }}" class="mb-3">
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">All Projects</option>
+                    {% for s in project_statuses %}
+                        <option value="{{ s }}" {% if s == status_filter %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <div class="list-group">
+                {% for p in projects %}
+                    {% set is_active = selected and selected.project.renovation_id == p.renovation_id %}
+                    <a href="{{ url_for('renovation.manageActiveProject', status=status_filter, selected_id=p.renovation_id) }}"
+                       class="list-group-item list-group-item-action {% if is_active %}active{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <strong>{{ p.title }}</strong>
+                            <span class="badge {{ project_badge[p.status] }} ms-2">{{ p.status }}</span>
+                        </div>
+                        <small>{{ p.customer_name }} · {{ p.milestones_done }}/{{ p.milestones_total }} milestones</small><br>
+                        {% if p.is_overdue %}
+                            <small class="{% if is_active %}fw-bold{% else %}text-danger{% endif %}">Overdue since {{ p.expected_completion_date|friendly_date }}</small>
+                        {% else %}
+                            <small class="{% if not is_active %}text-muted{% endif %}">{{ 'Completed' if p.status == 'Completed' else 'Due' }} {{ p.expected_completion_date|friendly_date }}</small>
+                        {% endif %}
+                    </a>
+                {% else %}
+                    <p class="text-muted small mb-0">No renovation projects found.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        {% if selected %}
+        {% set project = selected.project %}
+        {% set req = selected.source_request %}
+        {% set total = selected.milestones|length %}
+        {% set percent = ((selected.milestones_done / total * 100) if total else 0)|round|int %}
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="mb-0">{{ project.title }}</h5>
+                <span class="badge {{ project_badge[project.status] }}">{{ project.status }}</span>
+            </div>
+            <p class="text-muted small mb-3">
+                For <strong>{{ selected.customer.full_name if selected.customer else 'Unknown customer' }}</strong>
+                {% if selected.customer %}({{ selected.customer.email }}, {{ selected.customer.phone }}){% endif %}
+                · From service request #{{ project.source_request_id }} · Last updated {{ project.updated_at|renovation_time }}
+            </p>
+            {% if req %}
+                <p class="mb-2">{{ req.renovation_brief }}</p>
+                <p class="small mb-3"><strong>Budget:</strong> S${{ "{:,.2f}".format(req.budget|float) }}</p>
+            {% endif %}
+            <div class="row small mb-3">
+                <div class="col-sm-6"><strong>Started:</strong> {{ project.start_date|friendly_date }}</div>
+                <div class="col-sm-6">
+                    <strong>{{ 'Completed' if project.status == 'Completed' else 'Expected completion' }}:</strong>
+                    {{ project.expected_completion_date|friendly_date }}
+                    {% if selected.is_overdue %}<span class="badge bg-danger ms-1">Overdue</span>{% endif %}
+                </div>
+            </div>
+            <div class="d-flex justify-content-between small mb-1">
+                <span>Progress</span><span>{{ selected.milestones_done }} of {{ total }} milestones completed</span>
+            </div>
+            <div class="progress" style="height: 10px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent }}%"
+                     aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+
+        {% if project.status == 'Completed' %}
+        <div class="card p-4">
+            <h5 class="mb-3">Progress Milestones</h5>
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light"><tr><th>Milestone</th><th>Status</th><th>Recorded</th></tr></thead>
+                <tbody>
+                    {% for m in selected.milestones %}
+                    <tr><td>{{ m.description }}</td><td><span class="badge {{ milestone_badge[m.status] }}">{{ m.status }}</span></td>
+                        <td class="small text-muted">{{ m.recorded_at|renovation_time }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="small text-muted mt-3 mb-0">This project is completed and can no longer be updated.</p>
+        </div>
+        {% else %}
+        <div class="card p-4">
+            <h5 class="mb-3">Update Project</h5>
+            <form method="POST" action="{{ url_for('renovation.manageActiveProject', status=status_filter, selected_id=project.renovation_id) }}">
+                <input type="hidden" name="renovation_id" value="{{ project.renovation_id }}">
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label class="form-label small">Project Status</label>
+                        {% set chosen_status = posted.status if posted else project.status %}
+                        <select name="status" class="form-select">
+                            {% for s in project_statuses %}
+                                <option value="{{ s }}" {% if s == chosen_status %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label small">Expected Completion Date</label>
+                        <input type="date" name="expected_completion_date" class="form-control" min="{{ project.start_date }}"
+                               value="{{ posted.expected_completion_date if posted else project.expected_completion_date }}" required>
+                        <small class="{% if selected.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                            {% if selected.is_overdue %}This date has passed. Set a new date.{% else %}Confirm this date or set a new one.{% endif %}
+                        </small>
+                    </div>
+                </div>
+
+                <h6>Progress Milestones</h6>
+                <table class="table table-sm align-middle">
+                    <thead class="table-light"><tr><th>Milestone</th><th style="width: 170px;">Status</th><th>Last Recorded</th></tr></thead>
+                    <tbody>
+                        {% for m in selected.milestones %}
+                        {% set chosen = posted.milestone_statuses.get(m.milestone_id, m.status) if posted else m.status %}
+                        <tr>
+                            <td>{{ m.description }}</td>
+                            <td>
+                                <select name="milestone_status_{{ m.milestone_id }}" class="form-select form-select-sm">
+                                    {% for s in milestone_statuses %}
+                                        <option value="{{ s }}" {% if s == chosen %}selected{% endif %}>{{ s }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="small text-muted">{{ m.recorded_at|renovation_time }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-muted small">No milestones yet. Add at least one below.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div id="newMilestones">
+                    {% for item in (posted.new_milestones if posted else []) %}
+                    <div class="input-group input-group-sm mb-2 new-milestone">
+                        <input type="text" name="new_milestone_description" class="form-control" maxlength="120" value="{{ item.description }}" placeholder="New milestone, e.g. Electrical rewiring">
+                        <select name="new_milestone_status" class="form-select" style="max-width: 150px;">
+                            {% for s in milestone_statuses %}<option value="{{ s }}" {% if s == item.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-outline-danger remove-milestone">Remove</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm mb-4" id="addMilestone">+ Add Milestone</button>
+
+                <div>
+                    <button type="submit" class="btn btn-primary">Save Project Update</button>
+                </div>
+            </form>
+        </div>
+
+        <template id="milestoneRow">
+            <div class="input-group input-group-sm mb-2 new-milestone">
+                <input type="text" name="new_milestone_description" class="form-control" maxlength="120" placeholder="New milestone, e.g. Electrical rewiring">
+                <select name="new_milestone_status" class="form-select" style="max-width: 150px;">
+                    {% for s in milestone_statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+                </select>
+                <button type="button" class="btn btn-outline-danger remove-milestone">Remove</button>
+            </div>
+        </template>
+        <script>
+            const newMilestones = document.getElementById("newMilestones");
+            document.getElementById("addMilestone").addEventListener("click", () => {
+                newMilestones.appendChild(document.getElementById("milestoneRow").content.cloneNode(true));
+                newMilestones.lastElementChild.querySelector("input").focus();
+            });
+            newMilestones.addEventListener("click", e => {
+                if (e.target.classList.contains("remove-milestone")) e.target.closest(".new-milestone").remove();
+            });
+        </script>
+        {% endif %}
+        {% else %}
+        <div class="card p-4">
+            <p class="text-muted mb-0">Select a renovation project to manage it.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
