@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-import sqlite3
+from platform_management.entities import PlatformData, utc_now
 from datetime import datetime
 from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
@@ -24,15 +24,35 @@ def require_designer():
 
 @bp.context_processor
 def available_categories():
-    return {'category_names': [r['name'] for r in get_db().execute('SELECT name FROM categories ORDER BY name')]}
+    return {'category_names': [r['name'] for r in PlatformData.listCategories()]}
 
 def owner_project(project_id):
-    with get_db() as db:
-        row = db.execute('''SELECT p.*, c.name AS category FROM projects p
-                            JOIN categories c ON c.id=p.category_id
-                            WHERE p.id=? AND p.designer_id=?''', (project_id, g.designer_id)).fetchone()
+    row = PlatformData.getProject(project_id)
+    if row and row['designer_id'] != g.designer_id:
+        abort(404)
     if row is None: abort(404)
     return row
+
+
+def category_id(name):
+    for row in get_db().all('categories'):
+        if row['name'].casefold() == name.casefold():
+            return row['id']
+    abort(400, 'Select an existing project category.')
+
+
+def project_photos(project_id):
+    return sorted(get_db().all('photos', project_id=project_id), key=lambda p:(p['position'],p['id']))
+
+
+def editable_photo(db, photo_id):
+    photo = db.first('photos', id=photo_id)
+    if not photo:
+        abort(404)
+    project = owner_project(photo['project_id'])
+    if project['status'] not in ('draft','published'):
+        abort(404)
+    return photo
 
 
 def allowed_file(filename):
@@ -41,17 +61,15 @@ def allowed_file(filename):
 
 @bp.route('/')
 def dashboard():
-    with get_db() as db:
-        projects = db.execute('''SELECT p.*,c.name AS category,COUNT(ph.id) AS photo_count
-            FROM projects p JOIN categories c ON c.id=p.category_id LEFT JOIN photos ph ON ph.project_id=p.id
-            WHERE p.designer_id=? GROUP BY p.id ORDER BY p.id DESC''', (g.designer_id,)).fetchall()
-        counts = {
-            'total': db.execute('SELECT COUNT(*) FROM projects WHERE designer_id=? AND status!=\'removed\'', (g.designer_id,)).fetchone()[0],
-            'published': db.execute("SELECT COUNT(*) FROM projects WHERE designer_id=? AND status='published'", (g.designer_id,)).fetchone()[0],
-            'drafts': db.execute("SELECT COUNT(*) FROM projects WHERE designer_id=? AND status='draft'", (g.designer_id,)).fetchone()[0],
-            'hidden': db.execute("SELECT COUNT(*) FROM projects WHERE designer_id=? AND status='hidden'", (g.designer_id,)).fetchone()[0],
-            'reviews': db.execute('SELECT COUNT(*) FROM reviews WHERE designer_id=?', (g.designer_id,)).fetchone()[0]
-        }
+    db = get_db()
+    projects = [p for p in PlatformData.listProjects() if p['designer_id'] == g.designer_id]
+    projects.sort(key=lambda p:-p['id'])
+    for p in projects:
+        p['photo_count'] = len(project_photos(p['id']))
+    counts = {'total':sum(p['status']!='removed' for p in projects),
+              'reviews':len(db.all('reviews',designer_id=g.designer_id))}
+    for label,status in [('published','published'),('drafts','draft'),('hidden','hidden')]:
+        counts[label] = sum(p['status']==status for p in projects)
     return render_template('designer/dashboard.html', projects=projects, counts=counts)
 
 
@@ -65,13 +83,8 @@ def create_project():
         status = 'published' if request.form.get('action') == 'publish' else 'draft'
         category = request.form.get('category', 'Other').strip() or 'Other'
         with get_db() as db:
-            if not db.execute('SELECT 1 FROM categories WHERE name=? COLLATE NOCASE', (category,)).fetchone():
-                abort(400, 'Select an existing project category.')
-            category_id = db.execute('SELECT id FROM categories WHERE name=? COLLATE NOCASE', (category,)).fetchone()['id']
-            cur = db.execute('''INSERT INTO projects(title,description,designer_id,category_id,status,created_at,tags)
-                VALUES(?,?,?,?,?,?,?)''', (title, request.form.get('description',''), g.designer_id, category_id,
-                status, datetime.now().strftime('%Y-%m-%d'), request.form.get('tags','')))
-            pid = cur.lastrowid
+            cur = db.add('projects', title=title, description=request.form.get('description', ''), designer_id=g.designer_id, category_id=category_id(category), status=status, created_at=utc_now(), tags=request.form.get('tags', ''))
+            pid = cur['id']
         flash('Project listing created.', 'success')
         return redirect(url_for('designer.project_detail', project_id=pid))
     return render_template('designer/project_form.html', project=None)
@@ -89,12 +102,9 @@ def edit_project(project_id):
         status = 'published' if request.form.get('action') == 'publish' else 'draft'
         category = request.form.get('category', 'Other').strip() or 'Other'
         with get_db() as db:
-            if not db.execute('SELECT 1 FROM categories WHERE name=? COLLATE NOCASE', (category,)).fetchone():
-                abort(400, 'Select an existing project category.')
-            cat_id = db.execute('SELECT id FROM categories WHERE name=? COLLATE NOCASE', (category,)).fetchone()['id']
-            db.execute('''UPDATE projects SET title=?,description=?,category_id=?,tags=?,status=?
-                          WHERE id=? AND designer_id=? AND status IN ('draft','published')''',
-                       (title, request.form.get('description',''), cat_id, request.form.get('tags',''), status, project_id, g.designer_id))
+            db.update('projects', db.first('projects', id=project_id), title=title,
+                      description=request.form.get('description',''), category_id=category_id(category),
+                      tags=request.form.get('tags',''), status=status, featured=project['featured'] if status=='published' else 0)
         flash('Project updated.', 'success')
         return redirect(url_for('designer.project_detail', project_id=project_id))
     return render_template('designer/project_form.html', project=project)
@@ -104,7 +114,7 @@ def edit_project(project_id):
 def project_detail(project_id):
     project = owner_project(project_id)
     with get_db() as db:
-        photos = db.execute('SELECT * FROM photos WHERE project_id=? ORDER BY position,id', (project_id,)).fetchall()
+        photos = project_photos(project_id)
     return render_template('designer/project_detail.html', project=project, photos=photos)
 
 
@@ -115,14 +125,14 @@ def delete_project(project_id):
         flash('Restricted projects cannot be deleted from the designer workspace.', 'error')
         return redirect(url_for('designer.project_detail', project_id=project_id))
     with get_db() as db:
-        photos = db.execute('SELECT filename FROM photos WHERE project_id=?', (project_id,)).fetchall()
-        try:
-            deleted = db.execute("DELETE FROM projects WHERE id=? AND designer_id=? AND status IN ('draft','published')", (project_id, g.designer_id))
-            if deleted.rowcount != 1:
-                abort(409)
-        except sqlite3.IntegrityError:
+        photos = project_photos(project_id)
+        if any(db.first(table, project_id=project_id) for table in
+               ('content_reports','engagement_events','moderation_cases','feature_schedules')):
             flash('This project has platform activity and must be retained.', 'error')
             return redirect(url_for('designer.project_detail', project_id=project_id))
+        for photo in photos:
+            db.remove('photos', photo)
+        db.remove('projects', db.first('projects', id=project_id))
     for photo in photos:
         (UPLOAD_FOLDER / photo['filename']).unlink(missing_ok=True)
     flash('Project deleted.', 'success')
@@ -135,17 +145,16 @@ def manage_photos(project_id):
     if project['status'] in ('hidden', 'removed'): abort(403)
     if request.method == 'POST':
         with get_db() as db:
-            pos = db.execute('SELECT COALESCE(MAX(position),-1)+1 FROM photos WHERE project_id=?', (project_id,)).fetchone()[0]
+            pos = max((p['position'] for p in project_photos(project_id)), default=-1)+1
             for file in request.files.getlist('photos'):
                 if file and file.filename and allowed_file(file.filename):
                     safe = secure_filename(file.filename)
                     unique = f"{project_id}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{safe}"
                     UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
                     file.save(os.path.join(UPLOAD_FOLDER, unique))
-                    db.execute('INSERT INTO photos(project_id,filename,photo_type,position) VALUES(?,?,?,?)',
-                               (project_id, unique, request.form.get('photo_type','After'), pos)); pos += 1
+                    db.add('photos', project_id=project_id, filename=unique, photo_type=request.form.get('photo_type', 'After'), position=pos); pos += 1
         flash('Photos uploaded.', 'success'); return redirect(url_for('designer.manage_photos', project_id=project_id))
-    with get_db() as db: photos = db.execute('SELECT * FROM photos WHERE project_id=? ORDER BY position,id', (project_id,)).fetchall()
+    with get_db() as db: photos = project_photos(project_id)
     return render_template('designer/photos.html', project=project, photos=photos)
 
 
@@ -153,15 +162,15 @@ def manage_photos(project_id):
 def move_photo(photo_id, direction):
     if direction not in ('up','down'): abort(400)
     with get_db() as db:
-        photo = db.execute('''SELECT ph.* FROM photos ph JOIN projects p ON p.id=ph.project_id
-                              WHERE ph.id=? AND p.designer_id=? AND p.status IN ('draft','published')''', (photo_id, g.designer_id)).fetchone()
+        photo = editable_photo(db, photo_id)
         if not photo: abort(404)
-        rows = db.execute('SELECT * FROM photos WHERE project_id=? ORDER BY position,id', (photo['project_id'],)).fetchall()
+        rows = project_photos(photo['project_id'])
         ids = [r['id'] for r in rows]; idx = ids.index(photo_id); other = idx-1 if direction=='up' else idx+1
         if 0 <= other < len(ids):
             a,b=rows[idx],rows[other]
-            db.execute('UPDATE photos SET position=? WHERE id=?',(b['position'],a['id']))
-            db.execute('UPDATE photos SET position=? WHERE id=?',(a['position'],b['id']))
+            original_position = a['position']
+            db.update('photos', db.first('photos', id=a['id']), position=b['position'])
+            db.update('photos', db.first('photos', id=b['id']), position=original_position)
         pid=photo['project_id']
     return redirect(url_for('designer.manage_photos', project_id=pid))
 
@@ -169,40 +178,42 @@ def move_photo(photo_id, direction):
 @bp.route('/photos/<int:photo_id>/delete', methods=['POST'])
 def delete_photo(photo_id):
     with get_db() as db:
-        photo = db.execute('''SELECT ph.* FROM photos ph JOIN projects p ON p.id=ph.project_id
-                              WHERE ph.id=? AND p.designer_id=? AND p.status IN ('draft','published')''', (photo_id, g.designer_id)).fetchone()
+        photo = editable_photo(db, photo_id)
         if not photo: abort(404)
         pid=photo['project_id']; path=os.path.join(UPLOAD_FOLDER,photo['filename'])
-        if os.path.exists(path): os.remove(path)
-        db.execute('DELETE FROM photos WHERE id=?',(photo_id,))
+        db.remove('photos',photo)
+    Path(path).unlink(missing_ok=True)
     flash('Photo deleted.','success'); return redirect(url_for('designer.manage_photos',project_id=pid))
 
 
 @bp.route('/company', methods=['GET','POST'])
 def company_profile():
     with get_db() as db:
-        db.execute('INSERT OR IGNORE INTO company(designer_id) VALUES(?)', (g.designer_id,))
-    if request.method=='POST':
-        with get_db() as db:
-            db.execute('''UPDATE company SET name=?,description=?,email=?,phone=?,location=? WHERE designer_id=?''',
-                (request.form.get('name',''),request.form.get('description',''),request.form.get('email',''),
-                 request.form.get('phone',''),request.form.get('location',''),g.designer_id))
-        flash('Company profile saved.','success'); return redirect(url_for('designer.company_profile'))
-    with get_db() as db: company=db.execute('SELECT * FROM company WHERE designer_id=?',(g.designer_id,)).fetchone()
+        company = db.first('company', designer_id=g.designer_id)
+        if company is None:
+            company = db.add('company', designer_id=g.designer_id)
+        if request.method=='POST':
+            db.update('company', company, **{key:request.form.get(key,'') for key in
+                                            ('name','description','email','phone','location')})
+    if request.method == 'POST':
+        flash('Company profile saved.','success')
+        return redirect(url_for('designer.company_profile'))
     return render_template('designer/company.html',company=company)
 
 
 @bp.route('/reviews')
 def reviews():
-    with get_db() as db: items=db.execute('SELECT * FROM reviews WHERE designer_id=? ORDER BY id DESC',(g.designer_id,)).fetchall()
+    items = sorted(get_db().all('reviews', designer_id=g.designer_id), key=lambda r:-r['id'])
     return render_template('designer/reviews.html',reviews=items)
 
 
 @bp.route('/reviews/<int:review_id>/reply',methods=['POST'])
 def reply_review(review_id):
     with get_db() as db:
-        if not db.execute('SELECT 1 FROM reviews WHERE id=? AND designer_id=?',(review_id,g.designer_id)).fetchone(): abort(404)
-        db.execute('UPDATE reviews SET reply=? WHERE id=? AND designer_id=?',(request.form.get('reply','').strip(),review_id,g.designer_id))
+        review = db.first('reviews', id=review_id, designer_id=g.designer_id)
+        if not review:
+            abort(404)
+        db.update('reviews', review, reply=request.form.get('reply','').strip())
     flash('Your reply has been saved.','success'); return redirect(url_for('designer.reviews'))
 
 
