@@ -6,10 +6,9 @@ csrf = CSRFProtect()
 
 
 def init_app(app):
-    app.config.setdefault('PM_DATABASE', str(Path(app.instance_path) / 'platform_management.sqlite3'))
+    app.config.setdefault('PM_CSV_DIR', str(Path(app.root_path) / 'data' / 'platform'))
     # Protect this module only: Zhiyuan's original forms do not yet emit CSRF tokens.
     app.config.setdefault('WTF_CSRF_CHECK_DEFAULT', False)
-    Path(app.config['PM_DATABASE']).parent.mkdir(parents=True, exist_ok=True)
     if 'csrf' not in app.extensions:
         csrf.init_app(app)
     from . import db, cli

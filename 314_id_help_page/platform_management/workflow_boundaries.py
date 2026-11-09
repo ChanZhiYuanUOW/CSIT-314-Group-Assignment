@@ -116,6 +116,8 @@ def notifications():
     if not user or user['status']!='Active': return redirect(url_for('auth.authenticateLogin'))
     g.pm_user=user;db=get_db()
     if request.method=='POST':
-        with db: db.execute('UPDATE pm_notifications SET is_read=1 WHERE user_id=?',(user['user_id'],))
+        with db:
+            for row in db.all('pm_notifications', user_id=str(user['user_id'])):
+                db.update('pm_notifications', row, is_read=1)
         return redirect(url_for('pm.notifications'))
-    return render_template('pm/notifications.html',items=PlatformData.rows('SELECT * FROM pm_notifications WHERE user_id=? ORDER BY id DESC',(user['user_id'],)))
+    return render_template('pm/notifications.html', items=sorted(db.all('pm_notifications',user_id=str(user['user_id'])),key=lambda r:-r['id']))
