@@ -35,7 +35,7 @@ def create_app():
     app = Flask(__name__, template_folder=os.path.join(HELP_PAGE_DIR, "templates"))
     app.secret_key = os.environ.get("SECRET_KEY", "csit314_314_interior_design_help_key_2026")
     # same database location as running 314_id_help_page/app.py on its own
-    app.config["PM_DATABASE"] = os.path.join(HELP_PAGE_DIR, "instance", "platform_management.sqlite3")
+    app.config["PM_CSV_DIR"] = os.path.join(HELP_PAGE_DIR, "data", "platform")
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
