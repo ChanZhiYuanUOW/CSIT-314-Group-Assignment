@@ -9,7 +9,7 @@ from .entities import PlatformData
 
 def seed_projects():
     db=get_db()
-    if db.execute("SELECT 1 FROM demo_metadata WHERE name='pm_seed_v2'").fetchone():
+    if db.first('demo_metadata', name='pm_seed_v2'):
         click.echo('Project demo data already exists; no changes made.');return
     accounts=RegisteredUser._readAll()
     managers=[u for u in accounts if u['role']=='Platform Management' and u['status']=='Active']
@@ -27,18 +27,22 @@ def seed_projects():
         for style in styles:
             for space in spaces:
                 name=f'{style} {space}'
-                db.execute('INSERT OR IGNORE INTO categories(name,description) VALUES(?,?)',(name,f'{style} ideas for a {space.lower()}.'))
-                categories.append(db.execute('SELECT id FROM categories WHERE name=?',(name,)).fetchone()[0])
+                row = next((c for c in db.all('categories') if c['name'].casefold()==name.casefold()), None)
+                if not row:
+                    row = db.add('categories', name=name, description=f'{style} ideas for a {space.lower()}.')
+                categories.append(row['id'])
         projects=[]
         for i in range(100):
             status='published' if i<75 else ['draft','hidden','removed'][i%3]
-            projects.append(db.execute('INSERT INTO projects(title,description,designer_id,category_id,status,featured,created_at) VALUES(?,?,?,?,?,?,?)',(f'[DEMO] {styles[i%10]} Residence {i+1:03}','Temporary project fixture for Platform Management integration.',designers[i%len(designers)],categories[i%80],status,int(i<8),stamp())).lastrowid)
+            projects.append(db.add('projects', title=f'[DEMO] {styles[i % 10]} Residence {i + 1:03}', description='Temporary project fixture for Platform Management integration.', designer_id=designers[i % len(designers)], category_id=categories[i % 80], status=status, featured=int(i < 8), created_at=stamp())['id'])
         for kind,count in [('view',1000),('shortlist',300)]:
-            db.executemany('INSERT INTO engagement_events(project_id,customer_id,kind,occurred_at) VALUES(?,?,?,?)',[(rng.choice(projects[:75]),rng.choice(customers),kind,stamp()) for _ in range(count)])
+            for _ in range(count):
+                db.add('engagement_events', project_id=rng.choice(projects[:75]), customer_id=rng.choice(customers),
+                       kind=kind, occurred_at=stamp())
         for i in range(100):
-            db.execute('INSERT INTO content_reports(project_id,reporter_id,reason,evidence,created_at) VALUES(?,?,?,?,?)',(projects[i%75],customers[i%len(customers)],['Misleading description','Possible copied content','Incorrect category'][i%3],f'DEMO evidence #{i+1}: review listing details.',stamp()))
+            db.add('content_reports', project_id=projects[i % 75], reporter_id=customers[i % len(customers)], reason=['Misleading description', 'Possible copied content', 'Incorrect category'][i % 3], evidence=f'DEMO evidence #{i + 1}: review listing details.', created_at=stamp())
             PlatformData.recordAudit(db,manager['user_id'],'demo_fixture',f'Demo fixture #{i+1}','Synthetic entry for pagination.')
-        db.execute("INSERT INTO demo_metadata(name) VALUES('pm_seed_v2')")
+        db.add('demo_metadata', name='pm_seed_v2')
     click.echo('Created 100 categories, 100 projects, 100 reports, 1300 engagement events and 100 audit entries. Shared account CSV files were not changed.')
 
 

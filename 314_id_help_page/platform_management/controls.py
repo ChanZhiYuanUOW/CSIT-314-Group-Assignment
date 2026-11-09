@@ -118,13 +118,10 @@ class PublicProjectControl:
             raise ValueError('Choose a listed violation category and limit details to 1000 characters.')
         db = get_db()
         with db:
-            result = db.execute(
-                "INSERT INTO content_reports(project_id, reporter_id, reason, evidence, created_at) "
-                "SELECT id, ?, ?, ?, ? FROM projects WHERE id=? AND status='published'",
-                (customer_id, category, evidence, utc_now(), project_id)
-            )
-            if not result.rowcount:
+            if not db.first('projects', id=project_id, status='published'):
                 raise ValueError('This project is no longer published.')
+            db.add('content_reports', project_id=project_id, reporter_id=str(customer_id), reason=category,
+                   evidence=evidence, created_at=utc_now())
 
     @staticmethod
     def viewPublishedProjects():
