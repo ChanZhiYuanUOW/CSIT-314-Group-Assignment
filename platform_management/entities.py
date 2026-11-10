@@ -47,15 +47,29 @@ class PlatformData:
             return pk
 
     @classmethod
-    def deleteCategory(cls, actor, pk):
+    def deleteCategory(cls, actor, pk, destination_id=None, *, uncategorise=False):
         with get_db() as db:
             row = cls.getCategory(pk)
             if not row:
                 raise ValueError('Category no longer exists.')
-            if cls.projectCount(pk):
-                raise ValueError('Reassign projects using this category before removing it.')
+            projects = db.all('projects', category_id=pk)
+            reason = ''
+            if uncategorise:
+                if destination_id is not None:
+                    raise ValueError('Choose one action for linked projects.')
+                reason = f'Kept {len(projects)} projects as Uncategorised.'
+            elif destination_id is not None:
+                destination = db.first('categories', id=destination_id)
+                if not destination or destination_id == pk:
+                    raise ValueError('Select another existing category.')
+                reason = f'Moved {len(projects)} projects to {destination["name"]} (#{destination_id}).'
+            elif projects:
+                raise ValueError('Choose a destination or keep the projects as Uncategorised.')
+            for project in projects:
+                db.update('projects', project, category_id='' if uncategorise else destination_id)
             db.remove('categories', row)
-            cls.recordAudit(db, actor, 'remove_category', f'Category #{pk}: {row["name"]}')
+            cls.recordAudit(db, actor, 'remove_category', f'Category #{pk}: {row["name"]}', reason)
+            return reason
 
     @staticmethod
     def projectCount(category):
@@ -67,7 +81,7 @@ class PlatformData:
         names = {c['id']: c['name'] for c in db.all('categories')}
         if public:
             status = 'published'
-        rows = [dict(p, category=names[p['category_id']]) for p in db.all('projects')
+        rows = [dict(p, category=names.get(p['category_id'], 'Uncategorised')) for p in db.all('projects')
                 if query.casefold() in p['title'].casefold() and (not status or p['status'] == status)]
         return sorted(rows, key=lambda p: (p['featured'],p['created_at'],p['id']), reverse=True)
 
@@ -76,7 +90,8 @@ class PlatformData:
         project = get_db().first('projects', id=pk)
         if project:
             user = RegisteredUser.findById(str(project['designer_id']))
-            return dict(project, category=cls.getCategory(project['category_id'])['name'],
+            category = cls.getCategory(project['category_id'])
+            return dict(project, category=category['name'] if category else 'Uncategorised',
                         designer=user['username'] if user else f'Unavailable account #{project["designer_id"]}')
 
     @classmethod

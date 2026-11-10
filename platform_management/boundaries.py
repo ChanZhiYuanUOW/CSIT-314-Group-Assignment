@@ -69,12 +69,22 @@ class PlatformManagementBoundary:
     @bp.route('/categories/<int:pk>/remove',methods=['GET','POST'],endpoint='category_remove')
     @manager_required
     def removeProjectCategory(pk):
-        c=control();item=required(c.getCategory(pk))
-        if request.method=='POST':
+        manager = control()
+        item = required(manager.getCategory(pk))
+        if request.method == 'POST':
             try:
-                c.removeCategory(pk);flash('Category removed.');return redirect(url_for('pm.categories'))
-            except ValueError as exc: flash(str(exc),'error')
-        return render_template('pm/category_remove.html',item=item,count=c.categoryProjectCount(pk))
+                destination = request.form.get('destination_id', type=int)
+                result = manager.removeCategory(
+                    pk, destination, uncategorise=request.form.get('action') == 'uncategorise'
+                )
+                flash('Category removed. ' + result)
+                return redirect(url_for('pm.categories'))
+            except ValueError as exc:
+                flash(str(exc), 'error')
+        return render_template(
+            'pm/category_remove.html', item=item, count=manager.categoryProjectCount(pk),
+            destinations=[c for c in manager.searchCategories() if c['id'] != pk],
+        )
 
     @staticmethod
     @bp.get('/projects',endpoint='projects')

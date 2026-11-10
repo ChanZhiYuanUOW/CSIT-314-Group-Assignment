@@ -32,8 +32,9 @@ class PlatformManagementControl:
             raise ValueError('Name must be 1–80 characters; description at most 240.')
         return PlatformData.saveCategory(self.user_id,name,description,pk)
 
-    def removeCategory(self,pk):
-        self.authorize();PlatformData.deleteCategory(self.user_id,pk)
+    def removeCategory(self, pk, destination_id=None, *, uncategorise=False):
+        self.authorize()
+        return PlatformData.deleteCategory(self.user_id, pk, destination_id, uncategorise=uncategorise)
 
     def categoryProjectCount(self,pk):
         self.authorize();return PlatformData.projectCount(pk)
