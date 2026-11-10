@@ -1,1 +1,35 @@
-{% extends 'pm/base.html' %}{% from 'pm/macros.html' import csrf %}{% block content %}<h1>Remove category</h1><section class="card"><h2>{{ item.name }}</h2>{% if count %}<p>This category is linked to {{ count }} projects. Reassign those projects before removing it.</p>{% else %}<p>Remove this unused category?</p><form method="post">{{ csrf() }}<button class="danger">Confirm removal</button></form>{% endif %}<p><a href="{{ url_for('pm.categories') }}">Back to categories</a></p></section>{% endblock %}
+{% extends 'pm/base.html' %}
+{% from 'pm/macros.html' import csrf %}
+{% block content %}
+<h1>Remove category</h1>
+<section class="card">
+  <h2>{{ item.name }}</h2>
+  {% if count %}
+    <p>{{ count }} project{{ 's' if count != 1 }} currently use{{ 's' if count == 1 }} this category.</p>
+    {% if destinations %}
+      <form method="post">
+        {{ csrf() }}
+        <label for="destination">Move all linked projects to</label>
+        <select id="destination" name="destination_id" required>
+          <option value="">Choose another category</option>
+          {% for category in destinations %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="actions"><button>Move projects and remove category</button></div>
+      </form>
+    {% else %}
+      <p><a href="{{ url_for('pm.category_edit') }}">Create a destination category</a> to move these projects.</p>
+    {% endif %}
+    <form method="post">
+      {{ csrf() }}
+      <p>Removing only the category keeps every listing and labels it Uncategorised.</p>
+      <button class="danger" name="action" value="uncategorise">Remove category and keep listings</button>
+    </form>
+  {% else %}
+    <p>This category has no linked projects.</p>
+    <form method="post">{{ csrf() }}<button class="danger">Remove empty category</button></form>
+  {% endif %}
+  <p><a href="{{ url_for('pm.categories') }}">Back to categories</a></p>
+</section>
+{% endblock %}
