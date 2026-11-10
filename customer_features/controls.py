@@ -43,7 +43,7 @@ def _style_list(values):
 class BrowseProjectsControl:
     """<<control>> :BrowseProjectsControl - Browse Platform Projects + Search/Filter by Keyword & Category."""
 
-    def searchFilterProjects(self, keyword='', category_ids=(), sort='newest', page=1, styles=()):
+    def searchFilterProjects(self, keyword='', category_ids=(), sort='newest', page=1, styles=(), minimum=None, maximum=None):
         keyword = (keyword or '').strip()[:200]
         category_ids = _int_list(category_ids)
         styles = _style_list(styles)
@@ -52,14 +52,14 @@ class BrowseProjectsControl:
             page = max(1, int(page))
         except (TypeError, ValueError):
             page = 1
-        projects, total = ProjectCatalogue.search(keyword, category_ids, sort, page, PER_PAGE, styles)
+        projects, total = ProjectCatalogue.search(keyword, category_ids, sort, page, PER_PAGE, styles, minimum, maximum)
         pages = max(1, -(-total // PER_PAGE))
         if page > pages:  # a stale page number after filtering: show the last page instead of an empty list
             page = pages
-            projects, total = ProjectCatalogue.search(keyword, category_ids, sort, page, PER_PAGE, styles)
+            projects, total = ProjectCatalogue.search(keyword, category_ids, sort, page, PER_PAGE, styles, minimum, maximum)
         return {'projects': projects, 'total': total, 'page': page, 'pages': pages, 'keyword': keyword,
                 'category_ids': category_ids, 'styles': styles, 'sort': sort,
-                'filtered': bool(keyword or category_ids or styles)}
+                'filtered': bool(keyword or category_ids or styles or minimum is not None or maximum is not None)}
 
     def listFilterCategories(self):
         return ProjectCatalogue.categories()

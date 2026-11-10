@@ -16,6 +16,7 @@ Rows returned by CsvStore are the live in-memory dicts, so every function below 
 import csv
 import os
 from collections import Counter
+from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 from platform_management.db import get_db
 from platform_management.entities import PlatformData, utc_now
@@ -85,7 +86,7 @@ class ProjectCatalogue:
         return sorted(rows, key=lambda c: c['name'].casefold())
 
     @classmethod
-    def search(cls, keyword='', category_ids=(), sort='newest', page=1, per_page=12, styles=()):
+    def search(cls, keyword='', category_ids=(), sort='newest', page=1, per_page=12, styles=(), minimum=None, maximum=None):
         """Keyword + category/style search over published projects.
 
         Every whitespace-separated keyword must appear in at least one of: title, description, tags,
@@ -96,6 +97,12 @@ class ProjectCatalogue:
         wanted_styles = {str(x).casefold() for x in styles if str(x).strip()}
         matches = []
         for card in _build_cards():
+            if minimum is not None or maximum is not None:
+                if not card.get('estimated_cost_sgd'):
+                    continue
+                cost = Decimal(card['estimated_cost_sgd'])
+                if (minimum is not None and cost < minimum) or (maximum is not None and cost > maximum):
+                    continue
             if wanted and card['category_id'] not in wanted:
                 continue
             if wanted_styles and card['style'].casefold() not in wanted_styles:

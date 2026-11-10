@@ -33,7 +33,8 @@
           <span class="badge bg-dark">{{ project.category }}</span>
           {% for tag in project.tag_list %}<span class="badge bg-secondary">{{ tag }}</span>{% endfor %}
         </div>
-        <p style="white-space: pre-wrap;">{{ project.description or 'The designer has not added a description yet.' }}</p>
+        <p class="small mb-2">{% if project.estimated_cost_sgd %}Estimated cost: SGD {{ project.estimated_cost_sgd }}{% else %}Cost estimate pending{% endif %}</p>
+      <p style="white-space: pre-wrap;">{{ project.description or 'The designer has not added a description yet.' }}</p>
         <p class="text-muted small mb-0">Listed {{ project.created_at[:10] }} &bull; &#128065; {{ project.views }} views &bull; {{ project.photo_count }} photo{{ '' if project.photo_count == 1 else 's' }}</p>
       </div>
     </div>

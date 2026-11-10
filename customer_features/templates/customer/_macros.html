@@ -36,6 +36,7 @@
         {% endif %}
       </p>
 
+      <p class="small mb-2">{% if project.estimated_cost_sgd %}Estimated cost: SGD {{ project.estimated_cost_sgd }}{% else %}Cost estimate pending{% endif %}</p>
       {% if reason %}
         <p class="cf-reason mb-2">&#9733; {{ reason }}</p>
       {% endif %}

@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from flask import (Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for)
 from werkzeug.routing import BuildError
 from platform_management.access import current_manager
+from platform_management.project_cost import parse_amount
 from service_controls import ServiceRequestControl
 from service_entities import (
     ServiceRequest,
@@ -95,7 +96,17 @@ class CustomerBoundary:
     @bp.get('/projects', endpoint='browsePlatformProjects')
     @customer_required
     def browsePlatformProjects(user):
+        try:
+            minimum = parse_amount(request.args.get('min_price'))
+            maximum = parse_amount(request.args.get('max_price'))
+            if minimum is not None and maximum is not None and minimum > maximum:
+                raise ValueError('Minimum price must be less than or equal to maximum price.')
+        except ValueError as exc:
+            flash(str(exc), 'warning')
+            return redirect(url_for('customer.browsePlatformProjects', q=request.args.get('q', ''),
+                                    style=request.args.getlist('style'), sort=request.args.get('sort', 'newest')))
         result = browse_control.searchFilterProjects(
+            minimum=minimum, maximum=maximum,
             keyword=request.args.get('q', ''), category_ids=request.args.getlist('category'), styles=request.args.getlist('style'),
             sort=request.args.get('sort', 'newest'), page=request.args.get('page', 1))
 
@@ -105,6 +116,9 @@ class CustomerBoundary:
             args += [('style', s) for s in result['styles']]
             if result['sort'] != 'newest':
                 args.append(('sort', result['sort']))
+            for key, amount in [('min_price', minimum), ('max_price', maximum)]:
+                if amount is not None:
+                    args.append((key, amount))
             args.append(('page', n))
             return url_for('customer.browsePlatformProjects') + '?' + urlencode(args)
 
@@ -118,6 +132,14 @@ class CustomerBoundary:
             recent=recent_control.viewRecentlyViewedProjects(user['user_id'], 6) if first_page_unfiltered else [],
             recommended=recommend_control.viewPersonalisedRecommendations(user['user_id'], 4) if first_page_unfiltered else None,
             favourite_groups=favourites_control.viewGroups(user['user_id']))
+
+    @staticmethod
+    @bp.get('/public/projects/<int:project_id>', endpoint='publicProject')
+    def public_project(project_id):
+        project = details_control.viewPublicProject(project_id)
+        if project is None:
+            abort(404)
+        return render_template('customer/shared.html', project=project)
 
     # ---- View Project Details ------------------------------------------------------------------------------
     @staticmethod
