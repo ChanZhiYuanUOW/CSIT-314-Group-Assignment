@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from availability_entities import ConsultationAvailability
+from .availability_entities import ConsultationAvailability
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 

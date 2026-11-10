@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from renovation_controls import RenovationControl
+from .renovation_controls import RenovationControl
 
 renovation_bp = Blueprint("renovation", __name__, template_folder="templates")
 

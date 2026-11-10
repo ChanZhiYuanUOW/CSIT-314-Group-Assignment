@@ -1,6 +1,6 @@
 from datetime import date, datetime
-from help_page_bridge import RegisteredUser
-from renovation_entities import RenovationProject, ProgressMilestone, ServiceRequest
+from .help_page_bridge import RegisteredUser
+from .renovation_entities import RenovationProject, ProgressMilestone, ServiceRequest
 
 
 def _friendlyDate(iso_date: str) -> str:

@@ -5,8 +5,8 @@ from flask import (Blueprint, abort, current_app, flash, redirect, render_templa
 from werkzeug.routing import BuildError
 from platform_management.access import current_manager
 from platform_management.project_cost import parse_amount
-from service_controls import ServiceRequestControl
-from service_entities import (
+from process_service_requests.service_controls import ServiceRequestControl
+from process_service_requests.service_entities import (
     ServiceRequest,
     Quotation,
     Consultation,

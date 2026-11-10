@@ -1,10 +1,7 @@
 import unittest
-import sys
-import os
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from analytics_controls import DiscoveryControl
-from analytics_entities import Project
+from engagement_analytics.analytics_controls import DiscoveryControl
+from engagement_analytics.analytics_entities import Project
 
 DEMO_DESIGNER_ID = "2"
 

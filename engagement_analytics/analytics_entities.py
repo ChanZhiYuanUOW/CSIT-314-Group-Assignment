@@ -1,7 +1,7 @@
 import csv
 import os
 
-from help_page_bridge import RegisteredUser
+from .help_page_bridge import RegisteredUser
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 

@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from availability_controls import ServiceRequestControl
+from .availability_controls import ServiceRequestControl
 
 availability_bp = Blueprint("availability", __name__, template_folder="templates")
 

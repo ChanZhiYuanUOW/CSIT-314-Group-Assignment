@@ -1,12 +1,10 @@
 import unittest
-import sys
 import os
 import shutil
 import tempfile
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from service_controls import ServiceRequestControl
-from service_entities import ServiceRequest, Quotation, Consultation, ConsultationAvailability, DATA_DIR
+from process_service_requests.service_controls import ServiceRequestControl
+from process_service_requests.service_entities import ServiceRequest, Quotation, Consultation, ConsultationAvailability, DATA_DIR
 
 DESIGNER = "Interior Designer"
 DEMO_DESIGNER_ID = "2"

@@ -4,7 +4,7 @@ from datetime import datetime
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SERVICE_REQUEST_DATA_DIR = os.path.join(REPO_DIR, "314_id_process_service_requests", "data")
+SERVICE_REQUEST_DATA_DIR = os.path.join(REPO_DIR, "process_service_requests", "data")
 
 if not os.path.isdir(SERVICE_REQUEST_DATA_DIR):
     raise FileNotFoundError(f"Could not find Process Service Request's data/ folder at {SERVICE_REQUEST_DATA_DIR}")

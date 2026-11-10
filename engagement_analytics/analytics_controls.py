@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from analytics_entities import Project, EngagementRecord, DesignerFollow
+from .analytics_entities import Project, EngagementRecord, DesignerFollow
 
 
 class DiscoveryControl:

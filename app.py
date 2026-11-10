@@ -4,31 +4,17 @@ Run from the repo root: python app.py
 """
 
 import os
-import sys
-
-REPO_DIR = os.path.dirname(os.path.abspath(__file__))
-# HELP_PAGE_DIR = os.path.join(REPO_DIR, "314_id_help_page")
-
-# hacky way to work around import issues
-# since identifiers cannot start with digits
-# when the folders dont start with digits we can remove this and import normally :]
-FEATURE_DIRS = [
-    "314_id_manage_active_project",
-    "314_id_set_consultation_availability",
-    "314_id_process_service_requests",
-    "314_id_engagement_analytics",
-]
-for folder in [os.path.join(REPO_DIR, f) for f in FEATURE_DIRS]:
-    if folder not in sys.path:
-        sys.path.append(folder)
 
 from flask import Flask
 
 from boundaries import auth_bp, admin_bp
-from renovation_boundaries import renovation_bp
-from availability_boundaries import availability_bp
-from service_boundaries import service_request_bp
-from analytics_boundaries import discovery_bp
+from manage_active_project.renovation_boundaries import renovation_bp
+from set_consultation_availability.availability_boundaries import availability_bp
+from process_service_requests.service_boundaries import service_request_bp
+from engagement_analytics.analytics_boundaries import discovery_bp
+
+REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+# HELP_PAGE_DIR = os.path.join(REPO_DIR, "314_id_help_page")
 
 
 def create_app():

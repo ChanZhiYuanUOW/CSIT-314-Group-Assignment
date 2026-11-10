@@ -1,6 +1,6 @@
 from datetime import datetime
-from help_page_bridge import RegisteredUser
-from service_entities import (
+from .help_page_bridge import RegisteredUser
+from .service_entities import (
     ServiceRequest,
     Quotation,
     Consultation,

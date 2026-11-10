@@ -1,7 +1,10 @@
+"""
+Run this feature on its own from the repo root: python -m set_consultation_availability.app
+"""
 from flask import Flask
-from help_page_bridge import HELP_PAGE_TEMPLATES_DIR
+from .help_page_bridge import HELP_PAGE_TEMPLATES_DIR
 from boundaries import auth_bp, admin_bp  # the help page's login and admin pages, used unmodified
-from availability_boundaries import availability_bp
+from .availability_boundaries import availability_bp
 
 def create_app():
     app = Flask(__name__, template_folder=HELP_PAGE_TEMPLATES_DIR)

@@ -1,14 +1,12 @@
 import unittest
-import sys
 import os
 import shutil
 import tempfile
 import importlib.util
 from datetime import date, datetime, timedelta
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from availability_controls import ServiceRequestControl
-from availability_entities import ConsultationAvailability, SHARED_DATA_DIR
+from set_consultation_availability.availability_controls import ServiceRequestControl
+from set_consultation_availability.availability_entities import ConsultationAvailability, SHARED_DATA_DIR
 
 DESIGNER = "Interior Designer"
 DEMO_DESIGNER_ID = "2"

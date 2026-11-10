@@ -1,5 +1,4 @@
 import unittest
-import sys
 import os
 import csv
 import shutil
@@ -7,9 +6,8 @@ import tempfile
 from datetime import date, timedelta
 from unittest import mock
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from renovation_controls import RenovationControl
-from renovation_entities import RenovationProject, ProgressMilestone, ServiceRequest
+from manage_active_project.renovation_controls import RenovationControl
+from manage_active_project.renovation_entities import RenovationProject, ProgressMilestone, ServiceRequest
 
 DESIGNER = "Interior Designer"
 DEMO_DESIGNER_ID = "2"

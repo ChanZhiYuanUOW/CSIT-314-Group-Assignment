@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SHARED_DATA_DIR = os.path.join(REPO_DIR, "314_id_process_service_requests", "data")
+SHARED_DATA_DIR = os.path.join(REPO_DIR, "process_service_requests", "data")
 
 if not os.path.isdir(SHARED_DATA_DIR):
     raise FileNotFoundError(f"Could not find Process Service Request's data/ folder at {SHARED_DATA_DIR}")

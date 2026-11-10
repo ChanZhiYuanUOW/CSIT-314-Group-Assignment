@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
-from analytics_controls import DiscoveryControl
+from .analytics_controls import DiscoveryControl
 
 discovery_bp = Blueprint("discovery", __name__, template_folder="templates")
 
