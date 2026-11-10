@@ -2,12 +2,21 @@
 {% block title %}{{ 'Edit' if project else 'Create' }} project{% endblock %}
 {% block content %}
 <div class="page-heading"><div><span class="eyebrow">PORTFOLIO / PROJECT</span><h1>{{ 'Edit project' if project else 'Create a project listing' }}</h1><p class="muted">Add the details customers need to understand your work.</p></div><a class="btn light" href="{{ url_for('designer.dashboard') }}">← Back</a></div>
-<form method="post" class="form-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <label>Project title *</label><input name="title" required value="{{ project.title if project else '' }}" placeholder="e.g. Warm Minimalist Condo">
-  <label>Project description</label><textarea name="description" rows="5" placeholder="Describe the design concept, materials and work completed...">{{ project.description if project else '' }}</textarea>
-  <div class="form-row"><div><label>Category</label><select name="category"><option value="">Choose a category</option>{% for cat in category_names %}<option value="{{ cat }}" {% if project and project.category == cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}</select></div>
-  <div><label>Metadata tags</label><input name="tags" value="{{ project.tags if project else '' }}" placeholder="modern, minimalist, HDB"></div></div>
-  <p class="hint">Separate tags with commas. You can add photos after saving this form.</p>
+<form method="post" enctype="multipart/form-data" class="form-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Project title *</label><input name="title" required value="{{ request.form.get('title', project.title if project else '') }}" placeholder="e.g. Warm Minimalist Condo">
+  <label>Project description</label><textarea name="description" rows="5" placeholder="Describe the design concept, materials and work completed...">{{ request.form.get('description', project.description if project else '') }}</textarea>
+  <div class="form-row"><div><label>Category</label><select name="category"><option value="">Choose a category</option>{% for cat in category_names %}<option value="{{ cat }}" {% if request.form.get('category', project.category if project else '') == cat %}selected{% endif %}>{{ cat }}</option>{% endfor %}</select></div>
+  <div><label>Metadata tags</label><input name="tags" value="{{ request.form.get('tags', project.tags if project else '') }}" placeholder="modern, minimalist, HDB"></div></div>
+  <p class="hint">Separate tags with commas.</p>
+  <label for="estimate">Estimated project cost (SGD, optional)</label>
+  <input id="estimate" type="number" min="0" max="999999999999.99" step="0.01" name="estimated_cost_sgd" value="{{ request.form.get('estimated_cost_sgd', project.estimated_cost_sgd if project else '') }}">
+  {% if not project %}
+  <div class="form-row">
+    <div><label for="before-photos">Before photos</label><input id="before-photos" name="before_photos" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" multiple></div>
+    <div><label for="after-photos">After photos</label><input id="after-photos" name="after_photos" type="file" accept=".jpg,.jpeg,.png,.gif,.webp" multiple></div>
+  </div>
+  <p class="hint">Choose one or more images for either group. The first gallery photo is the listing cover.</p>
+  {% endif %}
   <div class="form-footer"><button class="btn light" name="action" value="draft">Save as draft</button><button class="btn primary" name="action" value="publish">Save and publish</button></div>
 </form>
 {% endblock %}

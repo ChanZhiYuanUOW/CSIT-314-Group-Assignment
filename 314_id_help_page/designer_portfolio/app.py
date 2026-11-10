@@ -1,11 +1,13 @@
 from pathlib import Path
 import os
 from platform_management.entities import PlatformData, utc_now
-from datetime import datetime
+from contextlib import ExitStack
+from uuid import uuid4
 from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
 from platform_management.access import current_manager
 from platform_management.db import get_db
+from platform_management.project_cost import parse_amount
 
 bp = Blueprint('designer', __name__, template_folder='templates', static_folder='static')
 UPLOAD_FOLDER = Path(__file__).parent / 'static' / 'uploads'
@@ -13,6 +15,21 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 @bp.before_request
 def require_designer():
+    if request.endpoint == 'designer.static':
+        asset = request.view_args['filename']
+        if asset.startswith('uploads/'):
+            db = get_db()
+            photo = db.first('photos', filename=asset.removeprefix('uploads/'))
+            project = db.first('projects', id=photo['project_id']) if photo else None
+            if project is None:
+                abort(404)
+            if project['status'] == 'published':
+                return
+            owner = current_manager()
+            if not owner or owner['role'] != 'Interior Designer' or str(owner['user_id']) != project['designer_id']:
+                abort(404)
+            return
+
     user = current_manager()
     if user is None:
         return redirect(url_for('auth.authenticateLogin'))
@@ -59,6 +76,19 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def save_gallery_files(db, project_id, files, cleanup):
+    position = max((p['position'] for p in project_photos(project_id)), default=-1) + 1
+    for upload, photo_type in files:
+        filename = f"{project_id}_{uuid4().hex}_{secure_filename(upload.filename)}"
+        path = UPLOAD_FOLDER / filename
+        UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+        cleanup.callback(path.unlink, missing_ok=True)
+        upload.save(path)
+        db.add('photos', project_id=project_id, filename=filename,
+               photo_type=photo_type, position=position)
+        position += 1
+
+
 @bp.route('/')
 def dashboard():
     db = get_db()
@@ -80,11 +110,28 @@ def create_project():
         if not title:
             flash('Please enter a project title.', 'error')
             return redirect(url_for('designer.create_project'))
+        try:
+            amount = parse_amount(request.form.get('estimated_cost_sgd'))
+        except ValueError as exc:
+            flash(str(exc), 'error')
+            return render_template('designer/project_form.html', project=None), 400
+        estimate = format(amount, '.2f') if amount is not None else ''
         status = 'published' if request.form.get('action') == 'publish' else 'draft'
         category = request.form.get('category', 'Other').strip() or 'Other'
-        with get_db() as db:
-            cur = db.add('projects', title=title, description=request.form.get('description', ''), designer_id=g.designer_id, category_id=category_id(category), status=status, created_at=utc_now(), tags=request.form.get('tags', ''))
-            pid = cur['id']
+        files = [(upload, kind) for field, kind in
+                 [('before_photos', 'Before'), ('after_photos', 'After')]
+                 for upload in request.files.getlist(field) if upload.filename]
+        if any(not allowed_file(upload.filename) for upload, _ in files):
+            flash('Choose JPG, PNG, GIF or WebP images and select your photos again.', 'error')
+            return render_template('designer/project_form.html', project=None), 400
+        with ExitStack() as cleanup:
+            with get_db() as db:
+                project = db.add('projects', title=title, description=request.form.get('description', ''),
+                                 designer_id=g.designer_id, category_id=category_id(category),
+                                 estimated_cost_sgd=estimate, status=status, created_at=utc_now(), tags=request.form.get('tags', ''))
+                pid = project['id']
+                save_gallery_files(db, pid, files, cleanup)
+            cleanup.pop_all()
         flash('Project listing created.', 'success')
         return redirect(url_for('designer.project_detail', project_id=pid))
     return render_template('designer/project_form.html', project=None)
@@ -99,12 +146,18 @@ def edit_project(project_id):
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         if not title: flash('Please enter a project title.', 'error'); return redirect(url_for('designer.edit_project', project_id=project_id))
+        try:
+            amount = parse_amount(request.form.get('estimated_cost_sgd', project['estimated_cost_sgd']))
+        except ValueError as exc:
+            flash(str(exc), 'error')
+            return render_template('designer/project_form.html', project=project), 400
+        estimate = format(amount, '.2f') if amount is not None else ''
         status = 'published' if request.form.get('action') == 'publish' else 'draft'
         category = request.form.get('category', 'Other').strip() or 'Other'
         with get_db() as db:
             db.update('projects', db.first('projects', id=project_id), title=title,
                       description=request.form.get('description',''), category_id=category_id(category),
-                      tags=request.form.get('tags',''), status=status, featured=project['featured'] if status=='published' else 0)
+                      estimated_cost_sgd=estimate, tags=request.form.get('tags',''), status=status, featured=project['featured'] if status=='published' else 0)
         flash('Project updated.', 'success')
         return redirect(url_for('designer.project_detail', project_id=project_id))
     return render_template('designer/project_form.html', project=project)
@@ -144,15 +197,13 @@ def manage_photos(project_id):
     project = owner_project(project_id)
     if project['status'] in ('hidden', 'removed'): abort(403)
     if request.method == 'POST':
-        with get_db() as db:
-            pos = max((p['position'] for p in project_photos(project_id)), default=-1)+1
-            for file in request.files.getlist('photos'):
-                if file and file.filename and allowed_file(file.filename):
-                    safe = secure_filename(file.filename)
-                    unique = f"{project_id}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{safe}"
-                    UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
-                    file.save(os.path.join(UPLOAD_FOLDER, unique))
-                    db.add('photos', project_id=project_id, filename=unique, photo_type=request.form.get('photo_type', 'After'), position=pos); pos += 1
+        files = [(upload, request.form.get('photo_type', 'After'))
+                 for upload in request.files.getlist('photos')
+                 if upload.filename and allowed_file(upload.filename)]
+        with ExitStack() as cleanup:
+            with get_db() as db:
+                save_gallery_files(db, project_id, files, cleanup)
+            cleanup.pop_all()
         flash('Photos uploaded.', 'success'); return redirect(url_for('designer.manage_photos', project_id=project_id))
     with get_db() as db: photos = project_photos(project_id)
     return render_template('designer/photos.html', project=project, photos=photos)

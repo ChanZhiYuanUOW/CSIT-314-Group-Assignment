@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-heading"><div><span class="eyebrow">PROJECT LISTING</span><h1>{{ project.title }}</h1><p class="muted">Created {{ project.created_at }} · {{ project.category or 'Uncategorised' }}</p></div><span class="status {{ project.status|lower }}">{{ project.status|title }}</span></div>
 <div class="detail-layout"><div class="form-card">
-  <h2>Listing details</h2><p>{{ project.description or 'No description has been added.' }}</p>
+  <h2>Listing details</h2><p>{% if project.estimated_cost_sgd %}Estimated cost: SGD {{ project.estimated_cost_sgd }}{% else %}Cost estimate pending{% endif %}</p><p>{{ project.description or 'No description has been added.' }}</p>
   <p><b>Tags:</b> {{ project.tags or 'No tags added' }}</p>
   <div class="form-footer">
   {% if project.status in ['draft','published'] %}<a class="btn primary" href="{{ url_for('designer.edit_project', project_id=project.id) }}">Edit listing</a><a class="btn light" href="{{ url_for('designer.manage_photos', project_id=project.id) }}">Manage photo gallery</a>{% endif %}
