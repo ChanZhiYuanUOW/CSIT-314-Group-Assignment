@@ -49,7 +49,7 @@ def migrate_reviews_csv(path):
 
 FIELDS = {
     'categories': 'id name description',
-    'projects': 'id title description designer_id category_id status featured created_at restriction_version tags',
+    'projects': 'id title description designer_id category_id status featured created_at restriction_version tags estimated_cost_sgd',
     'engagement_events': 'id project_id customer_id kind occurred_at',
     'content_reports': 'id project_id reporter_id reason evidence status created_at reviewed_by reviewed_at decision_note',
     'audit_log': 'id actor_id action target reason created_at',
@@ -134,7 +134,8 @@ class CsvStore:
             if path.exists():
                 with path.open(encoding='utf-8-sig', newline='') as stream:
                     reader = csv.DictReader(stream)
-                    if reader.fieldnames != fields.split():
+                    old_projects = table == 'projects' and reader.fieldnames == fields.split()[:-1]
+                    if reader.fieldnames != fields.split() and not old_projects:
                         raise ValueError(f'Unexpected CSV columns in {path}')
 
                     for row in reader:
@@ -145,6 +146,8 @@ class CsvStore:
                             if row[key]:
                                 row[key] = int(row[key])
 
+                        if old_projects:
+                            row['estimated_cost_sgd'] = ''
                         rows.append(row)
 
             self.tables[table] = rows
