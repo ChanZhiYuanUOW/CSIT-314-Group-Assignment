@@ -45,18 +45,15 @@ class RenovationBoundary:
         posted = None
         if request.method == "POST":
             renovation_id = request.form.get("renovation_id", "")
-            milestone_statuses = {key[len("milestone_status_"):]: value for key, value in request.form.items()
-                                  if key.startswith("milestone_status_")}
-            new_milestones = [{"description": d, "status": s} for d, s in zip(
-                request.form.getlist("new_milestone_description"), request.form.getlist("new_milestone_status"))]
             try:
                 ok, msg = renovation_control.manageActiveProject(
                     actor_role=session["role"],
                     designer_user_id=session["user_id"],
                     renovation_id=renovation_id,
                     status=request.form.get("status", ""),
-                    milestone_statuses=milestone_statuses,
-                    new_milestones=new_milestones,
+                    stage=request.form.get("stage", ""),
+                    completion_percentage=request.form.get("completion_percentage", ""),
+                    note=request.form.get("note", ""),
                     expected_completion_date=request.form.get("expected_completion_date", "")
                 )
             except (PermissionError, LookupError) as e:
@@ -71,8 +68,9 @@ class RenovationBoundary:
             posted = {
                 "status": request.form.get("status", ""),
                 "expected_completion_date": request.form.get("expected_completion_date", ""),
-                "milestone_statuses": milestone_statuses,
-                "new_milestones": [m for m in new_milestones if m["description"].strip()]
+                "stage": request.form.get("stage", ""),
+                "completion_percentage": request.form.get("completion_percentage", ""),
+                "note": request.form.get("note", "")
             }
 
         try:
@@ -92,7 +90,8 @@ class RenovationBoundary:
             selected=selected,
             status_filter=status_filter,
             project_statuses=renovation_control.PROJECT_STATUSES,
-            milestone_statuses=renovation_control.MILESTONE_STATUSES,
+            progress_stages=renovation_control.PROGRESS_STAGES,
+            max_note_length=renovation_control.MAX_NOTE_LENGTH,
             posted=posted,
             today=date.today().isoformat()
         )

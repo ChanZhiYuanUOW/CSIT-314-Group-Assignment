@@ -2,10 +2,9 @@
 {% block content %}
 {% set project_badge = {'Not Started': 'bg-secondary', 'In Progress': 'bg-primary', 'On Hold': 'bg-warning text-dark',
                         'Completed': 'bg-success'} %}
-{% set milestone_badge = {'Pending': 'bg-light text-dark border', 'In Progress': 'bg-info text-dark', 'Completed': 'bg-success'} %}
 <div class="mb-3">
     <h4 class="mb-0">Manage Active Projects</h4>
-    <small class="text-muted">Keep customers informed by recording progress milestones and the expected completion date of each renovation.</small>
+    <small class="text-muted">Keep customers informed by posting progress updates and the expected completion date of each renovation.</small>
 </div>
 
 <div class="row">
@@ -28,7 +27,8 @@
                             <strong>{{ p.title }}</strong>
                             <span class="badge {{ project_badge[p.status] }} ms-2">{{ p.status }}</span>
                         </div>
-                        <small>{{ p.customer_name }} · {{ p.milestones_done }}/{{ p.milestones_total }} milestones</small><br>
+                        <small>{{ p.customer_name }} ·
+                            {% if p.latest_progress %}{{ p.latest_progress.stage }} {{ p.latest_progress.completion_percentage }}%{% else %}No progress posted{% endif %}</small><br>
                         {% if p.is_overdue %}
                             <small class="{% if is_active %}fw-bold{% else %}text-danger{% endif %}">Overdue since {{ p.expected_completion_date|friendly_date }}</small>
                         {% else %}
@@ -46,8 +46,8 @@
         {% if selected %}
         {% set project = selected.project %}
         {% set req = selected.source_request %}
-        {% set total = selected.milestones|length %}
-        {% set percent = ((selected.milestones_done / total * 100) if total else 0)|round|int %}
+        {% set latest = selected.latest_progress %}
+        {% set percent = (latest.completion_percentage|int) if latest else 0 %}
         <div class="card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-start mb-2">
                 <h5 class="mb-0">{{ project.title }}</h5>
@@ -71,7 +71,8 @@
                 </div>
             </div>
             <div class="d-flex justify-content-between small mb-1">
-                <span>Progress</span><span>{{ selected.milestones_done }} of {{ total }} milestones completed</span>
+                <span>Progress</span>
+                <span>{% if latest %}{{ latest.stage }} · {{ percent }}% complete{% else %}No progress posted yet{% endif %}</span>
             </div>
             <div class="progress" style="height: 10px;">
                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent }}%"
@@ -79,22 +80,29 @@
             </div>
         </div>
 
-        {% if project.status == 'Completed' %}
-        <div class="card p-4">
-            <h5 class="mb-3">Progress Milestones</h5>
+        {% macro progress_history_table() %}
             <table class="table table-sm align-middle mb-0">
-                <thead class="table-light"><tr><th>Milestone</th><th>Status</th><th>Recorded</th></tr></thead>
+                <thead class="table-light"><tr><th>Stage</th><th class="text-end">Complete</th><th>Note</th><th>Posted</th></tr></thead>
                 <tbody>
-                    {% for m in selected.milestones %}
-                    <tr><td>{{ m.description }}</td><td><span class="badge {{ milestone_badge[m.status] }}">{{ m.status }}</span></td>
-                        <td class="small text-muted">{{ m.recorded_at|renovation_time }}</td></tr>
+                    {% for u in selected.progress_history %}
+                    <tr><td>{{ u.stage }}</td><td class="text-end">{{ u.completion_percentage }}%</td>
+                        <td class="small">{{ u.note }}</td>
+                        <td class="small text-muted text-nowrap">{{ u.updated_at|renovation_time }}</td></tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-muted small">No progress updates posted yet.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
+        {% endmacro %}
+
+        {% if project.status == 'Completed' %}
+        <div class="card p-4">
+            <h5 class="mb-3">Progress Updates</h5>
+            {{ progress_history_table() }}
             <p class="small text-muted mt-3 mb-0">This project is completed and can no longer be updated.</p>
         </div>
         {% else %}
-        <div class="card p-4">
+        <div class="card p-4 mb-4">
             <h5 class="mb-3">Update Project</h5>
             <form method="POST" action="{{ url_for('renovation.manageActiveProject', status=status_filter, selected_id=project.renovation_id) }}">
                 <input type="hidden" name="renovation_id" value="{{ project.renovation_id }}">
@@ -118,41 +126,29 @@
                     </div>
                 </div>
 
-                <h6>Progress Milestones</h6>
-                <table class="table table-sm align-middle">
-                    <thead class="table-light"><tr><th>Milestone</th><th style="width: 170px;">Status</th><th>Last Recorded</th></tr></thead>
-                    <tbody>
-                        {% for m in selected.milestones %}
-                        {% set chosen = posted.milestone_statuses.get(m.milestone_id, m.status) if posted else m.status %}
-                        <tr>
-                            <td>{{ m.description }}</td>
-                            <td>
-                                <select name="milestone_status_{{ m.milestone_id }}" class="form-select form-select-sm">
-                                    {% for s in milestone_statuses %}
-                                        <option value="{{ s }}" {% if s == chosen %}selected{% endif %}>{{ s }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                            <td class="small text-muted">{{ m.recorded_at|renovation_time }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="3" class="text-muted small">No milestones yet. Add at least one below.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-                <div id="newMilestones">
-                    {% for item in (posted.new_milestones if posted else []) %}
-                    <div class="input-group input-group-sm mb-2 new-milestone">
-                        <input type="text" name="new_milestone_description" class="form-control" maxlength="120" value="{{ item.description }}" placeholder="New milestone, e.g. Electrical rewiring">
-                        <select name="new_milestone_status" class="form-select" style="max-width: 150px;">
-                            {% for s in milestone_statuses %}<option value="{{ s }}" {% if s == item.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                <h6>Renovation Progress</h6>
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <label class="form-label small">Stage</label>
+                        {% set chosen_stage = posted.stage if posted else (latest.stage if latest else progress_stages[0]) %}
+                        <select name="stage" class="form-select" required>
+                            {% for s in progress_stages %}
+                                <option value="{{ s }}" {% if s == chosen_stage %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
                         </select>
-                        <button type="button" class="btn btn-outline-danger remove-milestone">Remove</button>
                     </div>
-                    {% endfor %}
+                    <div class="col-sm-6">
+                        <label class="form-label small">Completion Percentage</label>
+                        <input type="number" name="completion_percentage" class="form-control" min="0" max="100" step="1"
+                               value="{{ posted.completion_percentage if posted else percent }}" required>
+                    </div>
                 </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm mb-4" id="addMilestone">+ Add Milestone</button>
+                <div class="mb-1">
+                    <label class="form-label small">Progress Note for the Customer</label>
+                    <textarea name="note" class="form-control" rows="2" maxlength="{{ max_note_length }}"
+                              placeholder="e.g. Feature wall done; TV console installation next week.">{{ posted.note if posted else '' }}</textarea>
+                </div>
+                <small class="text-muted d-block mb-4">A progress update is posted to the customer when the stage or percentage changes, or when you add a note.</small>
 
                 <div>
                     <button type="submit" class="btn btn-primary">Save Project Update</button>
@@ -160,25 +156,10 @@
             </form>
         </div>
 
-        <template id="milestoneRow">
-            <div class="input-group input-group-sm mb-2 new-milestone">
-                <input type="text" name="new_milestone_description" class="form-control" maxlength="120" placeholder="New milestone, e.g. Electrical rewiring">
-                <select name="new_milestone_status" class="form-select" style="max-width: 150px;">
-                    {% for s in milestone_statuses %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
-                </select>
-                <button type="button" class="btn btn-outline-danger remove-milestone">Remove</button>
-            </div>
-        </template>
-        <script>
-            const newMilestones = document.getElementById("newMilestones");
-            document.getElementById("addMilestone").addEventListener("click", () => {
-                newMilestones.appendChild(document.getElementById("milestoneRow").content.cloneNode(true));
-                newMilestones.lastElementChild.querySelector("input").focus();
-            });
-            newMilestones.addEventListener("click", e => {
-                if (e.target.classList.contains("remove-milestone")) e.target.closest(".new-milestone").remove();
-            });
-        </script>
+        <div class="card p-4">
+            <h5 class="mb-3">Progress Updates</h5>
+            {{ progress_history_table() }}
+        </div>
         {% endif %}
         {% else %}
         <div class="card p-4">

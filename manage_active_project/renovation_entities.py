@@ -2,6 +2,8 @@ import csv
 import os
 from datetime import datetime
 
+from process_service_requests.service_entities import RenovationProgress  # noqa: F401
+
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SERVICE_REQUEST_DATA_DIR = os.path.join(REPO_DIR, "process_service_requests", "data")
@@ -72,49 +74,6 @@ class RenovationProject:
     @classmethod
     def updateStatus(cls, renovation_id: str, new_status: str) -> bool:
         return cls._updateFields(renovation_id, status=new_status)
-
-
-class ProgressMilestone:
-    """<<entity>> :ProgressMilestone
-    One stage of a renovation project and how far along it is.
-    """
-    CSV_FILE = os.path.join(DATA_DIR, "progress_milestones.csv")
-    FIELDS = ["milestone_id", "renovation_id", "description", "status", "recorded_at"]
-
-    @classmethod
-    def _readAll(cls):
-        return _readCsv(cls.CSV_FILE)
-
-    @classmethod
-    def getMilestonesForProject(cls, renovation_id: str):
-        return sorted([r for r in cls._readAll() if str(r["renovation_id"]) == str(renovation_id)],
-                      key=lambda r: int(r["milestone_id"]))
-
-    @classmethod
-    def updateProgress(cls, milestone_id: str, status: str) -> bool:
-        rows = cls._readAll()
-        updated = False
-        for row in rows:
-            if str(row["milestone_id"]) == str(milestone_id):
-                row["status"] = status
-                row["recorded_at"] = _now()
-                updated = True
-        if updated:
-            _writeCsv(cls.CSV_FILE, rows, cls.FIELDS)
-        return updated
-
-    @classmethod
-    def addMilestone(cls, renovation_id: str, description: str, status: str = "Pending"):
-        rows = cls._readAll()
-        new_milestone = {
-            "milestone_id": str(max([int(r["milestone_id"]) for r in rows], default=0) + 1),
-            "renovation_id": str(renovation_id),
-            "description": description.strip(),
-            "status": status,
-            "recorded_at": _now()
-        }
-        _writeCsv(cls.CSV_FILE, rows + [new_milestone], cls.FIELDS)
-        return new_milestone
 
 
 class ServiceRequest:

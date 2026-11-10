@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from .help_page_bridge import RegisteredUser
-from .renovation_entities import RenovationProject, ProgressMilestone, ServiceRequest
+from .renovation_entities import RenovationProject, RenovationProgress, ServiceRequest
 
 
 def _friendlyDate(iso_date: str) -> str:
@@ -11,8 +11,9 @@ class RenovationControl:
     """<<control>> :RenovationControl"""
 
     PROJECT_STATUSES = ("Not Started", "In Progress", "On Hold", "Completed")
-    MILESTONE_STATUSES = ("Pending", "In Progress", "Completed")
-    MAX_DESCRIPTION_LENGTH = 120
+    # Same stages Process Service Requests accepts for a progress update, so both pages record compatible entries
+    PROGRESS_STAGES = ("Planning", "Design", "Procurement", "Construction", "Installation", "Finishing", "Completed")
+    MAX_NOTE_LENGTH = 500
 
     @staticmethod
     def _checkDesignerPermissions(actor_role: str) -> bool:
@@ -42,11 +43,9 @@ class RenovationControl:
 
         projects = RenovationProject.getProjectsForDesigner(designer_user_id, status_filter)
         for p in projects:
-            milestones = ProgressMilestone.getMilestonesForProject(p["renovation_id"])
             customer = self._customerFor(ServiceRequest.findById(p["source_request_id"]))
             p["customer_name"] = customer["full_name"] if customer else "Unknown customer"
-            p["milestones_done"] = sum(1 for m in milestones if m["status"] == "Completed")
-            p["milestones_total"] = len(milestones)
+            p["latest_progress"] = RenovationProgress.getLatest(p["source_request_id"])
             p["is_overdue"] = self._isOverdue(p)
 
         selected = None
@@ -59,45 +58,33 @@ class RenovationControl:
         selected_details = None
         if selected:
             source_request = ServiceRequest.findById(selected["source_request_id"])
-            milestones = ProgressMilestone.getMilestonesForProject(selected["renovation_id"])
+            progress_history = RenovationProgress.getHistory(selected["source_request_id"])
             selected_details = {
                 "project": selected,
-                "milestones": milestones,
-                "milestones_done": sum(1 for m in milestones if m["status"] == "Completed"),
+                "progress_history": progress_history,
+                "latest_progress": progress_history[0] if progress_history else None,
                 "source_request": source_request,
                 "customer": self._customerFor(source_request),
                 "is_overdue": self._isOverdue(selected)
             }
         return projects, selected_details
 
-    def _validateMilestones(self, milestones, milestone_statuses, new_milestones):
-        """Returns (True, (status_changes, additions)) or (False, error message)."""
-        current = {m["milestone_id"]: m for m in milestones}
-        status_changes = {}
-        for milestone_id, status in milestone_statuses.items():
-            if milestone_id not in current:
-                return False, f"Milestone #{milestone_id} does not belong to this project."
-            if status not in self.MILESTONE_STATUSES:
-                return False, f"Choose a valid status for '{current[milestone_id]['description']}'."
-            if status != current[milestone_id]["status"]:
-                status_changes[milestone_id] = status
-
-        additions = []
-        seen = {m["description"].strip().lower() for m in milestones}
-        for item in new_milestones:
-            description = str(item.get("description", "")).strip()
-            status = item.get("status") or "Pending"
-            if not description:
-                continue  # blank form row
-            if len(description) > self.MAX_DESCRIPTION_LENGTH:
-                return False, f"Milestone descriptions must be {self.MAX_DESCRIPTION_LENGTH} characters or fewer."
-            if description.lower() in seen:
-                return False, f"'{description}' is already a milestone for this project."
-            if status not in self.MILESTONE_STATUSES:
-                return False, f"Choose a valid status for '{description}'."
-            seen.add(description.lower())
-            additions.append({"description": description, "status": status})
-        return True, (status_changes, additions)
+    def _validateProgress(self, stage: str, completion_percentage, note: str):
+        """Returns (True, (stage, percentage, note)) or (False, error message)."""
+        if stage not in self.PROGRESS_STAGES:
+            return False, "Please select a valid renovation stage."
+        try:
+            percentage = int(str(completion_percentage).strip())
+        except ValueError:
+            return False, "Please enter a valid completion percentage."
+        if not 0 <= percentage <= 100:
+            return False, "Completion percentage must be between 0 and 100."
+        if stage == "Completed" and percentage != 100:
+            return False, "A completed renovation must have 100% progress."
+        note = (note or "").strip()
+        if len(note) > self.MAX_NOTE_LENGTH:
+            return False, f"Progress notes must be {self.MAX_NOTE_LENGTH} characters or fewer."
+        return True, (stage, percentage, note)
 
     @staticmethod
     def _validateExpectedCompletionDate(project, status: str, expected_completion_date: str):
@@ -115,21 +102,21 @@ class RenovationControl:
             return False, "A completed project can't have a completion date in the future."
         return True, new_date
 
-    def recordProgressMilestones(self, renovation_id: str, status_changes, additions):
-        """<<include>> Records the milestone statuses that changed and any new milestones."""
-        for milestone_id, status in status_changes.items():
-            ProgressMilestone.updateProgress(milestone_id, status)
-        for item in additions:
-            ProgressMilestone.addMilestone(renovation_id, item["description"], item["status"])
-        return len(status_changes) + len(additions)
+    def recordRenovationProgress(self, project, stage: str, percentage: int, note: str) -> bool:
+        """<<include>> Posts a progress update for the customer, unless nothing changed since the last one."""
+        latest = RenovationProgress.getLatest(project["source_request_id"])
+        if latest and latest["stage"] == stage and int(latest["completion_percentage"]) == percentage and not note:
+            return False
+        RenovationProgress.addUpdate(project["source_request_id"], project["designer_user_id"], stage, percentage, note)
+        return True
 
     def recordExpectedCompletionDate(self, renovation_id: str, expected_completion_date: str):
         """<<include>> Records a new expected completion date, or confirms the current one."""
         return RenovationProject.updateExpectedCompletionDate(renovation_id, expected_completion_date)
 
     def manageActiveProject(self, actor_role: str, designer_user_id: str, renovation_id: str, status: str,
-                            milestone_statuses, new_milestones, expected_completion_date: str):
-        """Updates an active project's status, always recording its milestones and expected completion date."""
+                            stage: str, completion_percentage, note: str, expected_completion_date: str):
+        """Updates an active project's status, always recording its progress and expected completion date."""
         if not self._checkDesignerPermissions(actor_role):
             raise PermissionError("Unauthorised: Only Interior Designers may manage renovation projects.")
         project = self._getOwnedProject(designer_user_id, renovation_id)
@@ -138,32 +125,28 @@ class RenovationControl:
         if status not in self.PROJECT_STATUSES:
             return False, "Choose a valid project status."
 
-        milestones = ProgressMilestone.getMilestonesForProject(project["renovation_id"])
-        ok, result = self._validateMilestones(milestones, milestone_statuses, new_milestones)
+        ok, result = self._validateProgress(stage, completion_percentage, note)
         if not ok:
             return False, result
-        status_changes, additions = result
+        stage, percentage, note = result
         ok, result = self._validateExpectedCompletionDate(project, status, expected_completion_date)
         if not ok:
             return False, result
         new_date = result
 
-        final_statuses = [status_changes.get(m["milestone_id"], m["status"]) for m in milestones]
-        final_statuses += [item["status"] for item in additions]
-        if not final_statuses:
-            return False, "Record at least one progress milestone for this project."
-        if status == "Completed" and any(s != "Completed" for s in final_statuses):
-            return False, "Complete every milestone before marking the project as completed."
-        if status == "Not Started" and any(s != "Pending" for s in final_statuses):
-            return False, "A project with milestones in progress or completed can't be Not Started."
+        if status == "Completed" and stage != "Completed":
+            return False, "Set the renovation stage to Completed (100%) before marking the project as completed."
+        if stage == "Completed" and status != "Completed":
+            return False, "This renovation is at the Completed stage, so mark the project as Completed."
+        if status == "Not Started" and percentage > 0:
+            return False, "A project with progress recorded can't be Not Started."
 
         # Every check has passed, so nothing is written unless the whole update is valid
-        self.recordProgressMilestones(project["renovation_id"], status_changes, additions)
+        self.recordRenovationProgress(project, stage, percentage, note)
         self.recordExpectedCompletionDate(project["renovation_id"], new_date)
         RenovationProject.updateStatus(project["renovation_id"], status)
 
-        done = sum(1 for s in final_statuses if s == "Completed")
-        msg = f"Project updated: {status}, {done} of {len(final_statuses)} milestones completed."
+        msg = f"Project updated: {status}, {stage} stage at {percentage}%."
         if new_date != project["expected_completion_date"]:
             msg += (f" Expected completion moved from {_friendlyDate(project['expected_completion_date'])}"
                     f" to {_friendlyDate(new_date)}.")
