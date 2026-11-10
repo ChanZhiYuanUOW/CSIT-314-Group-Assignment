@@ -449,7 +449,7 @@ class TestHttp(CustomerTestCase):
         def order(query):
             html = self.client.get('/customer/projects' + query).get_data(as_text=True)
             self.assertNotIn('See all', html)  # the recommended / recently-viewed strips are hidden, results come first
-            return [t for t in re.findall(r'class="card-title[^"]*">\s*<a[^>]*>([^<]+)</a>', html.split('All projects')[-1])]
+            return [t.strip() for t in re.findall(r'class="card-title[^"]*">\s*<a[^>]*>([^<]+)</a>', html.split('All projects')[-1])]
         self.assertEqual(order('?sort=popular')[:2], ['Industrial Studio', 'Sunny Modern Loft'])
         self.assertEqual(order('?sort=title')[0], '100% Bright Home')
         self.assertEqual(order('?sort=oldest')[0], 'Modern Minimal Bedroom')
