@@ -1,0 +1,81 @@
+{# Shared pieces for the customer pages #}
+{% macro cover(project, height=180) %}
+  {% set url = photo_url(project.cover) %}
+  {% if url %}
+    <img src="{{ url }}" class="card-img-top" alt="{{ project.title }}" style="height: {{ height }}px; object-fit: cover;">
+  {% else %}
+    <div class="d-flex align-items-center justify-content-center text-white fw-bold"
+         style="height: {{ height }}px; background: linear-gradient(135deg,#334155,#64748b); font-size: 2rem;">
+      {{ project.category[:1] }}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro project_card(project, back, reason=None, removable=False) %}
+<div class="col-sm-6 col-lg-4 col-xl-3">
+  <div class="card h-100 overflow-hidden cf-card">
+    {{ cover(project) }}
+    <div class="card-body d-flex flex-column">
+      <div class="mb-2"><span class="badge bg-dark">{{ project.category }}</span></div>
+      <h6 class="card-title fw-bold mb-1">
+        <a class="text-decoration-none text-dark" href="{{ url_for('customer.viewProjectDetails', project_id=project.id) }}">{{ project.title }}</a>
+      </h6>
+      <p class="text-muted small mb-2">By {{ project.designer }}{% if project.company_name %} &bull; {{ project.company_name }}{% endif %}</p>
+      {% if reason %}<p class="cf-reason mb-2">&#9733; {{ reason }}</p>{% endif %}
+      <div class="mt-auto">
+        <div class="small text-muted mb-2">&#128065; {{ project.views }} views</div>
+        <div class="d-flex flex-wrap gap-1">
+          <a class="btn btn-sm btn-primary" href="{{ url_for('customer.viewProjectDetails', project_id=project.id) }}">Details</a>
+          {% if project.id in compare_ids %}
+            <form method="post" action="{{ url_for('customer.removeFromComparison') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="project_id" value="{{ project.id }}">
+              <input type="hidden" name="next" value="{{ back }}">
+              <button class="btn btn-sm btn-success" title="Remove from comparison">&#10003; Comparing</button>
+            </form>
+          {% else %}
+            <form method="post" action="{{ url_for('customer.addToComparison') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="project_id" value="{{ project.id }}">
+              <input type="hidden" name="next" value="{{ back }}">
+              <button class="btn btn-sm btn-outline-secondary">Compare</button>
+            </form>
+          {% endif %}
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('customer.shareProjectLink', project_id=project.id) }}">Share</a>
+          {% if removable %}
+            <form method="post" action="{{ url_for('customer.removeRecentlyViewed') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="project_id" value="{{ project.id }}">
+              <button class="btn btn-sm btn-outline-danger" title="Remove from history">&times;</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro compare_tray() %}
+  {% if compare_ids %}
+  <div class="alert alert-light border cf-tray d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+    <span class="small"><strong>{{ compare_ids|length }}</strong> of {{ compare_max }} projects selected for comparison</span>
+    <span class="d-flex gap-2">
+      <a class="btn btn-sm btn-success {% if compare_ids|length < 2 %}disabled{% endif %}" href="{{ url_for('customer.compareProjects') }}">Compare side-by-side</a>
+      <form method="post" action="{{ url_for('customer.clearComparison') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-outline-secondary">Clear</button>
+      </form>
+    </span>
+  </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro customer_nav(active) %}
+<ul class="nav nav-pills mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if active == 'browse' }}" href="{{ url_for('customer.browsePlatformProjects') }}">Browse projects</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if active == 'recommended' }}" href="{{ url_for('customer.viewPersonalisedRecommendations') }}">Recommended for you</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if active == 'recent' }}" href="{{ url_for('customer.viewRecentlyViewedProjects') }}">Recently viewed</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if active == 'compare' }}" href="{{ url_for('customer.compareProjects') }}">Compare{% if compare_ids %} ({{ compare_ids|length }}){% endif %}</a></li>
+</ul>
+{% endmacro %}

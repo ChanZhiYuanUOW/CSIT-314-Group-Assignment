@@ -12,6 +12,9 @@ def create_app():
 
     from designer_portfolio.app import bp as designer_bp
     app.register_blueprint(designer_bp, url_prefix='/designer')
+
+    from customer_features import init_app as init_customer_features
+    init_customer_features(app)
     return app
     
 
