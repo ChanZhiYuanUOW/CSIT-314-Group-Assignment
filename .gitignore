@@ -8,12 +8,16 @@ venv/
 # Flask stuff
 instance/
 
+*.write.lock
+
+*.DS_Store
+
 FinalBCEDiagram.drawio
 IDP_Six_Complex_Features_Sequence_Diagrams.drawio
-314_id_engagement_analytics/Monitor_Engagement_Analytics_Sequence_Diagram.drawio
+engagement_analytics/Monitor_Engagement_Analytics_Sequence_Diagram.drawio
 FinalUsecaseV5.drawio
-314_id_process_service_requests/Process_Service_Request_Sequence_Diagram.drawio
-314_id_set_consultation_availability/Set_Consultation_Availability_Sequence_Diagram.drawio
-314_id_manage_active_project/Manage_Active_Project_Sequence_Diagram.drawio
+process_service_requests/Process_Service_Request_Sequence_Diagram.drawio
+set_consultation_availability/Set_Consultation_Availability_Sequence_Diagram.drawio
+manage_active_project/Manage_Active_Project_Sequence_Diagram.drawio
 
 

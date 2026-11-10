@@ -1,0 +1,182 @@
+audit_id,admin_user_id,target_user_id,target_email,action,details,timestamp
+1,1,21,jiayi_ibrahim_21@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-13 15:00:00
+2,1,90,priya_tan_90@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-22 16:00:00
+3,1,34,bryan_chua_34@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-12 14:00:00
+4,1,80,xinyi_goh_80@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-15 00:00:00
+5,1,209,marcus_nair_209@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-27 15:00:00
+6,1,24,zhihao_ng_24@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-11 15:00:00
+7,1,131,junjie_koh_131@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-21 12:00:00
+8,1,80,xinyi_goh_80@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-27 06:00:00
+9,1,197,huimin_rahman_197@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-17 06:00:00
+10,1,36,junjie_lim_36@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-28 10:00:00
+11,1,217,huimin_nair_217@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-07 09:00:00
+12,1,198,farhan_tan_198@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-14 13:00:00
+13,1,10,priya_wong_10@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-11 02:00:00
+14,1,34,bryan_chua_34@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-13 00:00:00
+15,1,42,jiayi_ng_42@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-26 14:00:00
+16,1,208,zhihao_ng_208@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-04 07:00:00
+17,1,12,rachel_rahman_12@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-19 01:00:00
+18,1,114,jiayi_ng_114@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-13 03:00:00
+19,1,60,shuting_goh_60@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-15 05:00:00
+20,1,208,zhihao_ng_208@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-06 21:00:00
+21,1,95,chloe_goh_95@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-10 18:00:00
+22,1,119,xinyi_rahman_119@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-08 03:00:00
+23,1,129,huimin_ibrahim_129@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-15 23:00:00
+24,1,210,xinyi_lim_210@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-25 17:00:00
+25,1,224,rachel_lim_224@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-24 11:00:00
+26,1,224,rachel_lim_224@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-20 19:00:00
+27,1,183,nurul_lim_183@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-04 20:00:00
+28,1,73,weiming_wong_73@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-30 07:00:00
+29,1,116,rachel_ong_116@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-03 20:00:00
+30,1,213,shuting_goh_213@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-19 10:00:00
+31,1,210,xinyi_lim_210@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-18 01:00:00
+32,1,107,priya_rahman_107@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-31 00:00:00
+33,1,96,kaien_goh_96@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-25 00:00:00
+34,1,96,kaien_goh_96@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-25 12:00:00
+35,1,26,nurul_lim_26@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-05 14:00:00
+36,1,203,priya_lim_203@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-28 08:00:00
+37,1,74,farhan_chan_74@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-02 21:00:00
+38,1,195,nurul_kumar_195@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-09 21:00:00
+39,1,158,chloe_lim_158@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-11-01 10:00:00
+40,1,66,zhihao_wong_66@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-26 08:00:00
+41,1,187,priya_rahman_187@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-12 20:00:00
+42,1,29,weiming_nair_29@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-08 03:00:00
+43,1,78,shuting_nair_78@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-29 11:00:00
+44,1,108,farhan_ong_108@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-11 17:00:00
+45,1,17,farhan_nair_17@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-28 21:00:00
+46,1,138,junjie_ong_138@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-31 16:00:00
+47,1,148,kaien_wong_148@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-24 14:00:00
+48,1,75,junjie_kumar_75@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-19 12:00:00
+49,1,91,junjie_nair_91@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-24 18:00:00
+50,1,48,arjun_kumar_48@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-10 15:00:00
+51,1,135,priya_wong_135@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-21 10:00:00
+52,1,140,xinyi_chua_140@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-15 20:00:00
+53,1,6,zhihao_kumar_6@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-19 21:00:00
+54,1,163,xinyi_chan_163@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-20 01:00:00
+55,1,192,nurul_wong_192@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-11-01 01:00:00
+56,1,89,huimin_goh_89@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-24 13:00:00
+57,1,198,farhan_tan_198@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-13 13:00:00
+58,1,35,chloe_ng_35@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-31 01:00:00
+59,1,87,marcus_lee_87@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-05 16:00:00
+60,1,213,shuting_goh_213@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-07 15:00:00
+61,1,179,bryan_lim_179@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-16 16:00:00
+62,1,208,zhihao_ng_208@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-28 10:00:00
+63,1,10,priya_wong_10@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-23 06:00:00
+64,1,203,priya_lim_203@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-26 11:00:00
+65,1,80,xinyi_goh_80@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-16 00:00:00
+66,1,122,marcus_goh_122@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-24 11:00:00
+67,1,74,farhan_chan_74@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-21 11:00:00
+68,1,70,chloe_koh_70@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-29 01:00:00
+69,1,228,dup_kaien_chua_128@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-19 13:00:00
+70,1,230,dup_weiming_ong_130@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-02 00:00:00
+71,1,48,arjun_kumar_48@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-16 14:00:00
+72,1,95,chloe_goh_95@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-02 20:00:00
+73,1,206,shuting_chan_206@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-29 13:00:00
+74,1,21,jiayi_ibrahim_21@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-18 17:00:00
+75,1,140,xinyi_chua_140@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-23 02:00:00
+76,1,21,jiayi_ibrahim_21@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-21 15:00:00
+77,1,79,priya_koh_79@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-17 17:00:00
+78,1,43,junjie_chan_43@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-09 22:00:00
+79,1,115,weiming_rahman_115@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-30 13:00:00
+80,1,158,chloe_lim_158@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-19 04:00:00
+81,1,20,shuting_nair_20@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-10 16:00:00
+82,1,94,priya_nair_94@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-15 13:00:00
+83,1,8,weiming_chan_8@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-27 17:00:00
+84,1,9,farhan_koh_9@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-28 10:00:00
+85,1,200,junjie_rahman_200@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-12 01:00:00
+86,1,99,bryan_lim_99@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-01 18:00:00
+87,1,155,farhan_wong_155@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-27 15:00:00
+88,1,95,chloe_goh_95@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-20 22:00:00
+89,1,147,marcus_ong_147@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-27 20:00:00
+90,1,102,kaien_kumar_102@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-21 16:00:00
+91,1,64,bryan_ibrahim_64@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-02 09:00:00
+92,1,189,zhihao_rahman_189@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-26 21:00:00
+93,1,100,kaien_lee_100@help314id.sg,Assign/Update Role,Account role verified by User Admin.,2026-10-02 19:00:00
+94,1,68,weiming_nair_68@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-08 04:00:00
+95,1,55,farhan_ong_55@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-13 03:00:00
+96,1,52,weiming_lim_52@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-29 08:00:00
+97,1,116,rachel_ong_116@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-26 14:00:00
+98,1,23,arjun_nair_23@help314id.sg,Resolve Duplicate,Disabled confirmed duplicate account while preserving referenced records.,2026-10-06 15:00:00
+99,1,171,jiayi_goh_171@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-20 14:00:00
+100,1,141,bryan_ong_141@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-10-15 03:00:00
+101,1,218,jiayi_koh_218@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-26 14:00:00
+102,1,204,chloe_tan_204@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-20 20:00:00
+103,1,32,huimin_rahman_32@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-26 08:00:00
+104,1,203,priya_lim_203@help314id.sg,Reactivate Account,Account status restored to Active.,2026-10-17 12:00:00
+105,1,142,kaien_lim_142@help314id.sg,Verify Business Registration,ACRA UEN verified and approved.,2026-10-14 01:00:00
+106,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-03 14:11:31
+107,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-03 14:11:31
+108,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-03 14:11:31
+109,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-03 14:11:31
+110,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token.,2026-11-03 14:11:31
+111,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 00:46:20
+112,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 00:46:20
+113,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 00:46:20
+114,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 00:46:20
+115,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token.,2026-11-05 00:46:20
+116,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 00:46:38
+117,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 00:46:38
+118,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 00:46:38
+119,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 00:46:38
+120,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token.,2026-11-05 00:46:38
+121,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 01:34:27
+122,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 01:34:27
+123,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 01:34:27
+124,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 01:34:27
+125,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token (PBKDF2 hashed).,2026-11-05 01:34:27
+126,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 01:37:40
+127,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 01:37:40
+128,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 01:37:40
+129,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 01:37:40
+130,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token (PBKDF2 hashed).,2026-11-05 01:37:40
+131,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 07:09:19
+132,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 07:09:19
+133,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 07:09:19
+134,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 07:09:19
+135,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token (PBKDF2 hashed).,2026-11-05 07:09:19
+136,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 07:22:46
+137,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 07:22:46
+138,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 07:22:46
+139,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 07:22:46
+140,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token (PBKDF2 hashed).,2026-11-05 07:22:46
+141,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 07:44:28
+142,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 07:44:28
+143,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 07:44:28
+144,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 07:44:28
+145,3,3,customer@help314id.sg,Reset Forgotten Password,Password reset completed via recovery token (PBKDF2 hashed).,2026-11-05 07:44:28
+146,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 07:44:28
+147,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-05 08:10:32
+148,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-05 08:10:32
+149,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 08:10:32
+150,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 08:10:32
+151,1,36,junjie_lim_36@help314id.sg,Moderate Verified Business,"Lim Interior Studio #13 (UEN 201622739K): Listing Status -> Suspended, Specialty -> Condo & Luxury Specialist, Notes: Temporary compliance check",2026-11-05 08:10:32
+152,1,36,junjie_lim_36@help314id.sg,Moderate Verified Business,Lim Interior Studio #13 (UEN 201622739K): Listing Status -> Active,2026-11-05 08:10:32
+153,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 08:10:32
+154,1,225,dup_arjun_wong_25@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 16:19:44
+155,1,226,dup_nurul_lim_26@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 16:19:45
+156,1,227,dup_xinyi_ibrahim_27@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 16:19:46
+157,1,228,dup_kaien_chua_128@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 16:19:46
+158,1,229,dup_huimin_ibrahim_129@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 16:19:47
+159,1,230,dup_weiming_ong_130@help314id.sg,Resolve Duplicate,Confirmed duplicate disabled; referenced records preserved.,2026-11-05 16:19:47
+160,1,2,designer@help314id.sg,Verify Business Registration,Reviewed UEN 202326199K (Tan Interior Studio #1) -> Verified.,2026-11-05 16:19:49
+161,1,25,arjun_wong_25@help314id.sg,Verify Business Registration,Reviewed UEN 202098188K (Wong Interior Studio #2) -> Verified.,2026-11-05 16:19:49
+162,1,26,nurul_lim_26@help314id.sg,Verify Business Registration,Reviewed UEN 202544362K (Lim Interior Studio #3) -> Verified.,2026-11-05 16:19:49
+163,1,27,xinyi_ibrahim_27@help314id.sg,Verify Business Registration,Reviewed UEN 202193695K (Ibrahim Interior Studio #4) -> Verified.,2026-11-05 16:19:50
+164,1,28,arjun_koh_28@help314id.sg,Verify Business Registration,Reviewed UEN 201698452K (Koh Interior Studio #5) -> Verified.,2026-11-05 16:19:50
+165,1,29,weiming_nair_29@help314id.sg,Verify Business Registration,Reviewed UEN 202213280K (Nair Interior Studio #6) -> Verified.,2026-11-05 16:19:51
+166,1,30,huimin_ong_30@help314id.sg,Verify Business Registration,Reviewed UEN 202352992K (Ong Interior Studio #7) -> Verified.,2026-11-05 16:19:51
+167,1,31,weiming_kumar_31@help314id.sg,Verify Business Registration,Reviewed UEN 201894889K (Kumar Interior Studio #8) -> Verified.,2026-11-05 16:19:51
+168,1,32,huimin_rahman_32@help314id.sg,Verify Business Registration,Reviewed UEN 202570852K (Rahman Interior Studio #9) -> Verified.,2026-11-05 16:19:51
+169,1,33,zhihao_wong_33@help314id.sg,Verify Business Registration,Reviewed UEN 201995097K (Wong Interior Studio #10) -> Verified.,2026-11-05 16:19:51
+170,1,34,bryan_chua_34@help314id.sg,Verify Business Registration,Reviewed UEN 201628320K (Chua Interior Studio #11) -> Verified.,2026-11-05 16:19:51
+171,1,35,chloe_ng_35@help314id.sg,Verify Business Registration,Reviewed UEN 201549893K (Ng Interior Studio #12) -> Verified.,2026-11-05 16:19:51
+172,1,1,admin@help314id.sg,Configure Notification Preferences,"Notifications set: Email=False, SMS=False, Marketing=False.",2026-11-05 16:20:20
+173,231,231,chanelle@gmail.com,Register Account,Public registration completed as Customer.,2026-11-10 09:43:31
+174,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-10 12:32:23
+175,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-10 12:32:23
+176,1,2,designer@help314id.sg,Moderate Verified Business,"Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Suspended, Specialty -> Condo & Luxury Specialist, Notes: Temporary compliance check",2026-11-10 12:32:23
+177,1,2,designer@help314id.sg,Moderate Verified Business,Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Active,2026-11-10 12:32:23
+178,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-10 12:39:46
+179,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-10 12:39:46
+180,1,2,designer@help314id.sg,Moderate Verified Business,"Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Suspended, Specialty -> Condo & Luxury Specialist, Notes: Temporary compliance check",2026-11-10 12:39:46
+181,1,2,designer@help314id.sg,Moderate Verified Business,Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Active,2026-11-10 12:39:46

@@ -408,12 +408,12 @@ class CustomerReviews:
         repo_dir = Path(__file__).resolve().parent.parent
 
         renovation_path = (
-            repo_dir / '314_id_manage_active_project'
+            repo_dir / 'manage_active_project'
             / 'data' / 'renovation_projects.csv'
         )
 
         request_path = (
-            repo_dir / '314_id_process_service_requests'
+            repo_dir / 'process_service_requests'
             / 'data' / 'service_requests.csv'
         )
 
