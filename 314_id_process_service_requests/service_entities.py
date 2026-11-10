@@ -44,6 +44,21 @@ class ServiceRequest:
         return sorted(rows, key=lambda r: r["submitted_at"], reverse=True)
 
     @classmethod
+    def getRequestsForCustomer(cls, customer_user_id: str):
+        """Return all service requests submitted by a customer."""
+
+        rows = [
+            r for r in cls._readAll()
+            if str(r["customer_user_id"]) == str(customer_user_id)
+        ]
+
+        return sorted(
+            rows,
+            key=lambda r: r["submitted_at"],
+            reverse=True
+        )
+
+    @classmethod
     def changeStatus(cls, request_id: str, new_status: str) -> bool:
         rows = cls._readAll()
         updated = False
@@ -54,6 +69,45 @@ class ServiceRequest:
         if updated:
             _writeCsv(cls.CSV_FILE, rows, cls.FIELDS)
         return updated
+    
+    @classmethod
+    def createRequest(
+        cls,
+        customer_user_id,
+        designer_user_id,
+        renovation_brief,
+        budget,
+        request_type
+    ):
+        """Create a new service request from a customer."""
+
+        rows = cls._readAll()
+
+        new_id = str(
+            max(
+                (int(row["request_id"]) for row in rows),
+                default=0
+            ) + 1
+        )
+
+        new_request = {
+            "request_id": new_id,
+            "customer_user_id": str(customer_user_id),
+            "designer_user_id": str(designer_user_id),
+            "renovation_brief": renovation_brief.strip(),
+            "budget": str(budget),
+            "request_type": request_type,
+            "status": "Pending",
+            "submitted_at": datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+        }
+
+        rows.append(new_request)
+
+        _writeCsv(cls.CSV_FILE, rows, cls.FIELDS)
+
+        return new_request
 
 
 class Quotation:
@@ -119,6 +173,34 @@ class Consultation:
     CSV_FILE = os.path.join(DATA_DIR, "consultations.csv")
     FIELDS = ["consultation_id", "request_id", "proposed_time", "confirmed_time", "status",
               "designer_note", "responded_at"]
+
+    @classmethod
+    def createConsultation(cls, request_id: str, proposed_time: str):
+        """Create a consultation request for a service request."""
+
+        rows = _readCsv(cls.CSV_FILE)
+
+        new_id = str(
+            max(
+                (int(row["consultation_id"]) for row in rows),
+                default=0
+            ) + 1
+        )
+
+        consultation = {
+            "consultation_id": new_id,
+            "request_id": str(request_id),
+            "proposed_time": proposed_time,
+            "confirmed_time": "",
+            "status": "Requested",
+            "designer_note": "",
+            "responded_at": ""
+        }
+
+        rows.append(consultation)
+        _writeCsv(cls.CSV_FILE, rows, cls.FIELDS)
+
+        return consultation
 
     @classmethod
     def findByRequest(cls, request_id: str):
@@ -195,3 +277,69 @@ class ConsultationAvailability:
         if updated:
             _writeCsv(cls.CSV_FILE, rows, cls.FIELDS)
         return updated
+
+class RenovationProgress:
+    CSV_FILE = os.path.join(DATA_DIR, "renovation_progress.csv")
+
+    FIELDS = [
+        "progress_id",
+        "request_id",
+        "designer_user_id",
+        "stage",
+        "completion_percentage",
+        "note",
+        "updated_at"
+    ]
+
+    @classmethod
+    def _readAll(cls):
+        if not os.path.exists(cls.CSV_FILE):
+            return []
+
+        return _readCsv(cls.CSV_FILE)
+
+    @classmethod
+    def _writeAll(cls, rows):
+        _writeCsv(cls.CSV_FILE, rows, cls.FIELDS)
+
+    @classmethod
+    def addUpdate(cls, request_id, designer_user_id, stage,
+                  completion_percentage, note=""):
+        rows = cls._readAll()
+
+        next_id = max(
+            [int(row["progress_id"]) for row in rows],
+            default=0
+        ) + 1
+
+        new_update = {
+            "progress_id": str(next_id),
+            "request_id": str(request_id),
+            "designer_user_id": str(designer_user_id),
+            "stage": stage,
+            "completion_percentage": str(completion_percentage),
+            "note": note,
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        rows.append(new_update)
+        cls._writeAll(rows)
+        return new_update
+
+    @classmethod
+    def getHistory(cls, request_id):
+        rows = [
+            row for row in cls._readAll()
+            if str(row["request_id"]) == str(request_id)
+        ]
+
+        return sorted(
+            rows,
+            key=lambda row: row["updated_at"],
+            reverse=True
+        )
+
+    @classmethod
+    def getLatest(cls, request_id):
+        history = cls.getHistory(request_id)
+        return history[0] if history else None

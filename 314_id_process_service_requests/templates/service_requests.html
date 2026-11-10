@@ -110,6 +110,7 @@
         </div>
         {% endif %}
 
+
         {% if selected.wants_consultation and selected.consultation %}
         {% set cons = selected.consultation %}
         <div class="card p-4 mb-4">
@@ -117,13 +118,16 @@
                 <h5 class="mb-0">Consultation Request</h5>
                 <span class="badge {{ status_badge[cons.status] }}">{{ cons.status }}</span>
             </div>
+
             {% if cons.status == 'Requested' %}
                 <p class="mb-1">Customer asked for: <strong>{{ cons.proposed_time|friendly_time }}</strong></p>
+
                 {% if selected.requested_time_is_free %}
                     <p class="small text-success">This matches one of your free availability slots.</p>
                 {% else %}
                     <p class="small text-danger">You have no free slot at this time, so it can't be accepted. Propose another time or decline.</p>
                 {% endif %}
+
                 <form method="POST" action="{{ url_for('service_request.acceptDeclineOrProposeTime', request_id=req.request_id) }}">
                     <div class="mb-3">
                         <div class="form-check form-check-inline">
@@ -139,6 +143,7 @@
                             <label class="form-check-label" for="decDecline">Decline</label>
                         </div>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">New time (for Propose)</label>
                         <select name="slot_id" class="form-select form-select-sm">
@@ -147,28 +152,130 @@
                                 <option value="{{ slot.slot_id }}">{{ slot.start_time|friendly_time }}</option>
                             {% endfor %}
                         </select>
-                        {% if not selected.available_slots %}<small class="text-muted">You have no free upcoming slots.</small>{% endif %}
+                        {% if not selected.available_slots %}
+                            <small class="text-muted">You have no free upcoming slots.</small>
+                        {% endif %}
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Note to customer</label>
                         <textarea name="note" class="form-control form-control-sm" rows="2" placeholder="Required when declining"></textarea>
                     </div>
+
                     <button type="submit" class="btn btn-primary">Send Response</button>
                 </form>
+
             {% else %}
-                <p class="mb-1">Customer asked for: {{ cons.proposed_time|friendly_time }}</p>
+                {% if cons.status == 'Time Proposed' %}
+                    <p class="mb-1">You proposed: <strong>{{ cons.proposed_time|friendly_time }}</strong> — waiting for the customer.</p>
+                {% else %}
+                    <p class="mb-1">Customer requested: {{ cons.proposed_time|friendly_time }}</p>
+                {% endif %}
+
                 {% if cons.status == 'Accepted' %}
                     <p class="mb-1">Confirmed for: <strong>{{ cons.confirmed_time|friendly_time }}</strong></p>
-                {% elif cons.status == 'Time Proposed' %}
-                    <p class="mb-1">You proposed: <strong>{{ cons.proposed_time|friendly_time }}</strong> — waiting for the customer.</p>
                 {% endif %}
-                {% if cons.designer_note %}<p class="small mb-1"><strong>Your note:</strong> {{ cons.designer_note }}</p>{% endif %}
-                <p class="small text-muted mb-0">Responded {{ cons.responded_at|friendly_time }}</p>
+
+                {% if cons.designer_note %}
+                    <p class="small mb-1"><strong>Your note:</strong> {{ cons.designer_note }}</p>
+                {% endif %}
+
+                {% if cons.responded_at %}
+                    <p class="small text-muted mb-0">Responded {{ cons.responded_at|friendly_time }}</p>
+                {% endif %}
             {% endif %}
         </div>
         {% endif %}
+        
+
+        {% if selected %}
+        <div class="card p-4 mb-4">
+            <h5 class="mb-3">Renovation Progress</h5>
+
+            <form method="POST"
+                  action="{{ url_for('service_request.updateRenovationProgress', request_id=req.request_id) }}">
+
+                <div class="mb-3">
+                    <label class="form-label">Renovation Stage</label>
+                    <select name="stage" class="form-select" required>
+                        <option value="">Select current stage</option>
+                        <option value="Planning">Planning</option>
+                        <option value="Design">Design</option>
+                        <option value="Procurement">Procurement</option>
+                        <option value="Construction">Construction</option>
+                        <option value="Installation">Installation</option>
+                        <option value="Finishing">Finishing</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Completion Percentage</label>
+                    <input type="number"
+                           name="completion_percentage"
+                           class="form-control"
+                           min="0"
+                           max="100"
+                           step="1"
+                           placeholder="e.g. 25"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Progress Note</label>
+                    <textarea name="note"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Describe the latest renovation progress..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Update Renovation Progress
+                </button>
+            </form>
+
+            <hr>
+
+            <h6 class="mb-3">Progress History</h6>
+
+            {% if progress_history %}
+                {% for update in progress_history %}
+                    <div class="border rounded p-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{ update['stage'] }}</strong>
+                            <span class="badge bg-info text-dark">
+                                {{ update['completion_percentage'] }}%
+                            </span>
+                        </div>
+
+                        <div class="progress mt-2 mb-2" style="height: 10px;">
+                            <div class="progress-bar"
+                                 role="progressbar"
+                                 style="width: {{ update['completion_percentage'] }}%">
+                            </div>
+                        </div>
+
+                        {% if update['note'] %}
+                            <p class="mb-1">{{ update['note'] }}</p>
+                        {% endif %}
+
+                        <small class="text-muted">
+                            Updated {{ update['updated_at'] }}
+                        </small>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted mb-0">
+                    No renovation progress updates yet.
+                </p>
+            {% endif %}
+        </div>
+        {% endif %}
+
         {% else %}
-        <div class="card p-4"><p class="text-muted mb-0">Select a service request to view its details.</p></div>
+        <div class="card p-4">
+            <p class="text-muted mb-0">Select a service request to view its details.</p>
+        </div>
         {% endif %}
     </div>
 </div>

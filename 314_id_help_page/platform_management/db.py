@@ -3,10 +3,49 @@ import csv
 import os
 from pathlib import Path
 import shutil
-from tempfile import mkdtemp
+from tempfile import mkdtemp, mkstemp
 
 from contextlib import contextmanager
 from flask import current_app, g
+
+
+def migrate_reviews_csv(path):
+    old_fields = 'id designer_id customer review reply'.split()
+    new_fields = FIELDS['reviews'].split()
+
+    if not path.exists():
+        return
+
+    with path.open(encoding='utf-8-sig', newline='') as stream:
+        reader = csv.DictReader(stream)
+
+        # Only migrate the exact old reviews schema.
+        if reader.fieldnames != old_fields:
+            return
+
+        rows = list(reader)
+
+    fd, temp_path = mkstemp(dir=path.parent, suffix='.tmp')
+
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8', newline='') as stream:
+            writer = csv.DictWriter(stream, fieldnames=new_fields)
+            writer.writeheader()
+
+            for row in rows:
+                for field in new_fields:
+                    row.setdefault(field, '')
+                writer.writerow(row)
+
+            stream.flush()
+            os.fsync(stream.fileno())
+
+        os.replace(temp_path, path)
+
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
 
 FIELDS = {
     'categories': 'id name description',
@@ -22,9 +61,11 @@ FIELDS = {
     'pm_notifications': 'id user_id message created_at is_read',
     'photos': 'id project_id filename photo_type position',
     'company': 'id designer_id name description email phone location',
-    'reviews': 'id designer_id customer review reply',
+    'reviews': 'id designer_id customer review reply customer_id renovation_id rating created_at',
+    'favourite_groups': 'id customer_id name created_at',
+    'favourites': 'id customer_id group_id project_id',
 }
-NUMERIC = set('id project_id category_id case_id report_id featured slot restriction_version is_read position'.split())
+NUMERIC = set('id project_id category_id group_id case_id report_id featured slot restriction_version is_read position rating'.split())
 DEFAULTS = {
     'projects': dict(featured=0, restriction_version=0),
     'content_reports': dict(status='open'),
@@ -82,25 +123,37 @@ class CsvStore:
     def load(self):
         self.tables = {}
         self.next_ids = {}
+
         for table, fields in FIELDS.items():
             path = self.folder / (table + '.csv')
             rows = []
+
+            if table == 'reviews':
+                migrate_reviews_csv(path)
+
             if path.exists():
                 with path.open(encoding='utf-8-sig', newline='') as stream:
                     reader = csv.DictReader(stream)
                     if reader.fieldnames != fields.split():
                         raise ValueError(f'Unexpected CSV columns in {path}')
+
                     for row in reader:
                         if None in row or any(value is None for value in row.values()):
                             raise ValueError(f'Incomplete CSV row in {path} at line {reader.line_num}')
+
                         for key in NUMERIC.intersection(row):
                             if row[key]:
                                 row[key] = int(row[key])
-                        rows.append(row)
-            self.tables[table] = rows
-            self.next_ids[table] = max((r.get('id', 0) for r in rows), default=0) + 1
-        self.dirty = set()
 
+                        rows.append(row)
+
+            self.tables[table] = rows
+            self.next_ids[table] = max(
+                (r.get('id', 0) for r in rows), default=0
+            ) + 1
+
+        self.dirty = set()
+        
     def all(self, table, **criteria):
         return [r for r in self.tables[table] if all(r[k] == v for k, v in criteria.items())]
 

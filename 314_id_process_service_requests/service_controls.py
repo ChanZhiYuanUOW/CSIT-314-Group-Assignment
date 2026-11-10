@@ -1,6 +1,12 @@
 from datetime import datetime
 from help_page_bridge import RegisteredUser
-from service_entities import ServiceRequest, Quotation, Consultation, ConsultationAvailability
+from service_entities import (
+    ServiceRequest,
+    Quotation,
+    Consultation,
+    ConsultationAvailability,
+    RenovationProgress
+)
 
 
 class ServiceRequestControl:
@@ -20,6 +26,20 @@ class ServiceRequestControl:
             raise LookupError(f"Service request #{request_id} was not found.")
         if str(request["designer_user_id"]) != str(designer_user_id):
             raise PermissionError("Unauthorised: This service request was sent to another designer.")
+        return request
+
+    @staticmethod
+    def _getCustomerOwnedRequest(customer_user_id: str, request_id: str):
+        request = ServiceRequest.findById(request_id)
+
+        if not request:
+            raise LookupError(f"Service request #{request_id} was not found.")
+
+        if str(request["customer_user_id"]) != str(customer_user_id):
+            raise PermissionError(
+                "Unauthorised: This service request belongs to another customer."
+            )
+
         return request
 
     @staticmethod
@@ -163,3 +183,188 @@ class ServiceRequestControl:
 
         self._refreshRequestStatus(request)
         return True, msg
+
+    def respondToProposedConsultation(
+        self,
+        actor_role: str,
+        customer_user_id: str,
+        request_id: str,
+        decision: str
+    ):
+        """Allow a customer to accept or decline a designer's proposed time."""
+
+        if actor_role != "Customer":
+            raise PermissionError(
+                "Unauthorised: Only customers may respond to proposed consultation times."
+            )
+
+        request = self._getCustomerOwnedRequest(
+            customer_user_id, request_id
+        )
+
+        consultation = Consultation.findByRequest(request["request_id"])
+
+        if not consultation:
+            return False, "No consultation was found."
+
+        if consultation["status"] != "Time Proposed":
+            return False, "There is no proposed consultation time awaiting your response."
+
+        if decision not in ("accept", "decline"):
+            return False, "Choose to accept or decline the proposed time."
+
+        if decision == "accept":
+            slot = ConsultationAvailability.findFreeSlotAt(
+                request["designer_user_id"],
+                consultation["proposed_time"]
+            )
+
+            if not slot:
+                return False, "This consultation slot is no longer available."
+
+            Consultation.respondToProposedTime(
+                consultation["consultation_id"],
+                "Accepted",
+                confirmed_time=slot["start_time"],
+                designer_note=consultation["designer_note"]
+            )
+
+            ConsultationAvailability.updateSlot(
+                slot["slot_id"], False
+            )
+
+            message = "Consultation time accepted successfully."
+
+        else:
+            Consultation.respondToProposedTime(
+                consultation["consultation_id"],
+                "Declined",
+                designer_note=consultation["designer_note"]
+            )
+
+            message = "Proposed consultation time declined."
+
+        self._refreshRequestStatus(request)
+
+        return True, message
+
+    def submitServiceRequest(
+        self,
+        customer_user_id,
+        designer_user_id,
+        renovation_brief,
+        budget,
+        request_type,
+        proposed_time=None
+    ):
+        """Validate and submit a customer's renovation service request."""
+
+        renovation_brief = str(renovation_brief or '').strip()
+        request_type = str(request_type or '').strip()
+
+        if not renovation_brief:
+            return False, 'Please provide your renovation brief.'
+
+        if len(renovation_brief) > 2000:
+            return False, 'Renovation brief must be 2000 characters or fewer.'
+
+        try:
+            budget = float(budget)
+        except (TypeError, ValueError):
+            return False, 'Please enter a valid budget.'
+
+        if budget <= 0:
+            return False, 'Budget must be greater than zero.'
+
+        if request_type not in (
+            'Quotation',
+            'Consultation',
+            'Quotation and Consultation'
+        ):
+            return False, 'Invalid request type.'
+
+        if "Consultation" in request_type:
+            if not proposed_time:
+                return False, 'Please select a preferred consultation date and time.'
+
+            try:
+                proposed_time = datetime.strptime(
+                    proposed_time,
+                    '%Y-%m-%dT%H:%M'
+                ).strftime('%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                return False, 'Please enter a valid consultation date and time.'
+
+            if proposed_time <= datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
+                return False, 'Consultation time must be in the future.'
+
+        new_request = ServiceRequest.createRequest(
+            customer_user_id=customer_user_id,
+            designer_user_id=designer_user_id,
+            renovation_brief=renovation_brief,
+            budget=f'{budget:.2f}',
+            request_type=request_type
+        )
+
+        if "Consultation" in request_type:
+            Consultation.createConsultation(
+                request_id=new_request['request_id'],
+                proposed_time=proposed_time
+            )
+
+        return True, 'Your service request has been submitted successfully.'
+
+    @staticmethod
+    def updateRenovationProgress(
+        designer_user_id: str,
+        request_id: str,
+        stage: str,
+        completion_percentage: int,
+        note: str = ""
+    ):
+        try:
+            ServiceRequestControl._getOwnedRequest(
+                designer_user_id=designer_user_id,
+                request_id=request_id
+            )
+
+            valid_stages = [
+                "Planning",
+                "Design",
+                "Procurement",
+                "Construction",
+                "Installation",
+                "Finishing",
+                "Completed"
+            ]
+
+            if stage not in valid_stages:
+                return False, "Please select a valid renovation stage."
+
+            if not 0 <= int(completion_percentage) <= 100:
+                return False, "Completion percentage must be between 0 and 100."
+
+            if stage == "Completed" and int(completion_percentage) != 100:
+                return False, "A completed renovation must have 100% progress."
+
+            RenovationProgress.addUpdate(
+                request_id=request_id,
+                designer_user_id=designer_user_id,
+                stage=stage,
+                completion_percentage=int(completion_percentage),
+                note=note.strip()
+            )
+
+            return True, "Renovation progress updated successfully."
+
+        except (LookupError, PermissionError, ValueError) as error:
+            return False, str(error)
+
+    @staticmethod
+    def getRenovationProgress(designer_user_id: str, request_id: str):
+        ServiceRequestControl._getOwnedRequest(
+            designer_user_id=designer_user_id,
+            request_id=request_id
+        )
+
+        return RenovationProgress.getHistory(request_id)

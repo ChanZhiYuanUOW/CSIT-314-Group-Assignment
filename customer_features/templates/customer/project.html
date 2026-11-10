@@ -1,0 +1,111 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import cover, compare_tray, customer_nav with context %}
+{% block content %}
+{{ customer_nav('browse') }}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="{{ url_for('customer.browsePlatformProjects') }}">Browse</a></li>
+  <li class="breadcrumb-item"><a href="{{ url_for('customer.browsePlatformProjects', style=project.style) }}">{{ project.category }}</a></li>
+  <li class="breadcrumb-item active">{{ project.title }}</li>
+</ol></nav>
+{{ compare_tray() }}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card overflow-hidden mb-4">
+      {% if project.photos %}
+      <div id="gallery" class="carousel slide">
+        <div class="carousel-inner">
+          {% for ph in project.photos %}
+          <div class="carousel-item {{ 'active' if loop.first }}">
+            <img src="{{ photo_url(ph.filename) }}" class="d-block w-100" alt="{{ project.title }} ({{ ph.photo_type }})" style="max-height: 460px; object-fit: cover;">
+            <div class="carousel-caption"><span class="badge bg-dark">{{ ph.photo_type }}</span></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if project.photos|length > 1 %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#gallery" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span><span class="visually-hidden">Previous</span></button>
+        <button class="carousel-control-next" type="button" data-bs-target="#gallery" data-bs-slide="next"><span class="carousel-control-next-icon"></span><span class="visually-hidden">Next</span></button>
+        {% endif %}
+      </div>
+      {% else %}{{ cover(project, 260) }}{% endif %}
+      <div class="card-body">
+        <h3 class="fw-bold">{{ project.title }}</h3>
+        <div class="mb-3">
+          <span class="badge bg-dark">{{ project.category }}</span>
+          {% for tag in project.tag_list %}<span class="badge bg-secondary">{{ tag }}</span>{% endfor %}
+        </div>
+        <p style="white-space: pre-wrap;">{{ project.description or 'The designer has not added a description yet.' }}</p>
+        <p class="text-muted small mb-0">Listed {{ project.created_at[:10] }} &bull; &#128065; {{ project.views }} views &bull; {{ project.photo_count }} photo{{ '' if project.photo_count == 1 else 's' }}</p>
+      </div>
+    </div>
+
+    <div class="card"><div class="card-body">
+      <h5 class="fw-bold">Customer reviews of {{ project.designer }} <span class="text-muted fs-6">({{ project.review_count }})</span></h5>
+      {% for r in project.reviews %}
+        <div class="border-top pt-2 mt-2">
+          <strong>{{ r.customer }}</strong>
+          <p class="mb-1">{{ r.review }}</p>
+          {% if r.reply %}<p class="small text-muted ms-3 mb-0">Designer reply: {{ r.reply }}</p>{% endif %}
+        </div>
+      {% else %}<p class="text-muted mb-0">No reviews yet.</p>{% endfor %}
+    </div></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-body">
+      <h6 class="fw-bold mb-1">Designer</h6>
+      <p class="mb-1">{{ project.designer }}</p>
+      {% if project.company %}
+        <p class="mb-1 fw-semibold">{{ project.company.name }}</p>
+        {% if project.company.location %}<p class="small text-muted mb-1">&#128205; {{ project.company.location }}</p>{% endif %}
+        {% if project.company.description %}<p class="small">{{ project.company.description }}</p>{% endif %}
+        {% if project.company.email %}<p class="small mb-0">&#9993; {{ project.company.email }}</p>{% endif %}
+        {% if project.company.phone %}<p class="small mb-0">&#9742; {{ project.company.phone }}</p>{% endif %}
+      {% else %}<p class="small text-muted mb-0">No company profile yet.</p>{% endif %}
+        <a href="{{ url_for('customer.submitServiceRequest', project_id=project_id) }}"
+          class="btn btn-primary w-100 mt-3">
+          Request Service
+        </a>
+    </div></div>
+
+    <div class="card"><div class="card-body d-grid gap-2">
+      {% if project.id in compare_ids %}
+        <form method="post" action="{{ url_for('customer.removeFromComparison') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="project_id" value="{{ project.id }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button class="btn btn-success w-100">&#10003; In comparison (remove)</button>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('customer.addToComparison') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="project_id" value="{{ project.id }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button class="btn btn-outline-primary w-100">Add to comparison</button>
+        </form>
+      {% endif %}
+      <!-- Save project to favourites -->
+      <form method="post" action="{{ url_for('customer.addFavourite') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="project_id" value="{{ project.id }}">
+
+        <label class="form-label fw-semibold mb-1">Save to Favourites</label>
+
+        <div class="d-flex gap-2">
+          <select name="group_id" class="form-select form-select-sm">
+            <option value="">My Favourites (default)</option>
+            {% for group in favourite_groups|default([]) %}
+              {% if group.name.casefold() != 'my favourites' %}
+                <option value="{{ group.id }}">{{ group.name }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            Save
+          </button>
+        </div>
+      </form>
+      <a class="btn btn-outline-secondary" href="{{ url_for('customer.shareProjectLink', project_id=project.id) }}">Share project link</a>
+      <a class="btn btn-outline-danger" href="{{ url_for('customer.reportMisleadingContent', project_id=project.id) }}">&#9873; Report misleading content</a>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

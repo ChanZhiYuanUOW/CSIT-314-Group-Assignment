@@ -1,0 +1,72 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import project_card, compare_tray, customer_nav with context %}
+{% block content %}
+{{ customer_nav('browse') }}
+<div class="hero-banner p-4 mb-4">
+  <h3 class="fw-bold mb-1">Browse Platform Projects</h3>
+  <p class="mb-3 text-white-50">Search interior design projects by keyword, designer or style.</p>
+  <form method="get" action="{{ url_for('customer.browsePlatformProjects') }}" class="row g-2">
+    <div class="col-lg-5"><input type="search" name="q" value="{{ result.keyword }}" maxlength="200" class="form-control" placeholder="Keyword: title, style, tag, designer, company..."></div>
+    <div class="col-lg-3">
+      <select name="style" class="form-select" aria-label="Style" onchange="this.form.submit()">
+        <option value="">All styles</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if c.name in result.styles }}>{{ c.name }} ({{ c.project_count }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-lg-2">
+      <select name="sort" class="form-select" aria-label="Sort by" onchange="this.form.submit()">
+        <option value="newest" {{ 'selected' if result.sort == 'newest' }}>Newest</option>
+        <option value="popular" {{ 'selected' if result.sort == 'popular' }}>Most viewed</option>
+        <option value="title" {{ 'selected' if result.sort == 'title' }}>Title A-Z</option>
+        <option value="oldest" {{ 'selected' if result.sort == 'oldest' }}>Oldest</option>
+      </select>
+    </div>
+    <div class="col-lg-2 d-grid d-lg-flex gap-2">
+      <button class="btn btn-primary flex-fill">Search</button>
+      {% if refined %}<a class="btn btn-outline-light" href="{{ url_for('customer.browsePlatformProjects') }}">Reset</a>{% endif %}
+    </div>
+  </form>
+</div>
+
+{{ compare_tray() }}
+
+{% if recommended and recommended['items'] %}
+<div class="d-flex justify-content-between align-items-end mb-2">
+  <h5 class="fw-bold mb-0">{{ 'Recommended for you' if recommended.personalised else 'Popular right now' }}</h5>
+  <a class="small" href="{{ url_for('customer.viewPersonalisedRecommendations') }}">See all</a>
+</div>
+<div class="row g-3 mb-4">
+  {% for p in recommended['items'] %}{{ project_card(p, request.full_path, reason=p.reason) }}{% endfor %}
+</div>
+{% endif %}
+
+{% if recent %}
+<div class="d-flex justify-content-between align-items-end mb-2">
+  <h5 class="fw-bold mb-0">Recently viewed</h5>
+  <a class="small" href="{{ url_for('customer.viewRecentlyViewedProjects') }}">See all</a>
+</div>
+<div class="row g-3 mb-4">{% for p in recent %}{{ project_card(p, request.full_path) }}{% endfor %}</div>
+{% endif %}
+
+<div class="d-flex justify-content-between align-items-end mb-2">
+  <h5 class="fw-bold mb-0">{{ 'Search results' if result.filtered else 'All projects' }}
+    <span class="text-muted fs-6 fw-normal">&bull; sorted by {{ {'newest': 'newest first', 'oldest': 'oldest first', 'popular': 'most viewed', 'title': 'title A-Z'}[result.sort] }}</span></h5>
+  <span class="text-muted small">{{ result.total }} project{{ '' if result.total == 1 else 's' }}</span>
+</div>
+{% if result.projects %}
+<div class="row g-3">{% for p in result.projects %}{{ project_card(p, request.full_path) }}{% endfor %}</div>
+{% if result.pages > 1 %}
+<nav class="mt-4" aria-label="Project pages"><ul class="pagination justify-content-center">
+  <li class="page-item {{ 'disabled' if result.page <= 1 }}"><a class="page-link" href="{{ page_url(result.page - 1) }}">Previous</a></li>
+  <li class="page-item disabled"><span class="page-link">Page {{ result.page }} of {{ result.pages }}</span></li>
+  <li class="page-item {{ 'disabled' if result.page >= result.pages }}"><a class="page-link" href="{{ page_url(result.page + 1) }}">Next</a></li>
+</ul></nav>
+{% endif %}
+{% else %}
+<div class="card"><div class="card-body text-center py-5">
+  <h6 class="fw-bold">No projects match your search</h6>
+  <p class="text-muted mb-3">Try fewer keywords, check the spelling, or pick a different category.</p>
+  <a class="btn btn-primary" href="{{ url_for('customer.browsePlatformProjects') }}">Clear search</a>
+</div></div>
+{% endif %}
+{% endblock %}

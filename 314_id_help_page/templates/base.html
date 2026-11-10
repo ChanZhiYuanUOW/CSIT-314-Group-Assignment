@@ -18,7 +18,6 @@
         .badge-Deactivated { background-color: #dc3545; }
         .badge-Duplicate_Disabled { background-color: #6c757d; }
     </style>
-    {% block head_extra %}{% endblock %}
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
@@ -31,11 +30,11 @@
                     Signed in as <strong>{{ session.get('full_name') }}</strong>
                     <span class="badge bg-primary ms-1">{{ session.get('role') }}</span>
                 </span>
-                {% if session.get('role') == 'Customer' %}
-                    <a href="{{ url_for('customer.browsePlatformProjects') }}" class="btn btn-outline-light btn-sm me-2">Browse Projects</a>
-                {% endif %}
                 {% if session.get('role') == 'Interior Designer' %}
                     <a href="{{ url_for('designer.dashboard') }}" class="btn btn-outline-light btn-sm me-2">Designer workspace</a>
+                {% endif %}
+                {% if session.get('role') == 'Customer' %}
+                    <a href="{{ url_for('customer.viewFavourites') }}" class="btn btn-outline-light btn-sm me-2">My Favourites</a>
                 {% endif %}
                 {% if session.get('role') == 'User Admin' %}
                     <a href="{{ url_for('admin.manageUserAccounts') }}" class="btn btn-warning btn-sm me-2">User Admin Console</a>

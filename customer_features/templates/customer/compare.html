@@ -1,0 +1,55 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import cover, customer_nav with context %}
+{% block content %}
+{{ customer_nav('compare') }}
+<h3 class="fw-bold mb-3">Compare projects side-by-side</h3>
+{% set projects = comparison.projects %}
+{% if not projects %}
+<div class="card"><div class="card-body text-center py-5">
+  <h6 class="fw-bold">Nothing to compare yet</h6>
+  <p class="text-muted">Press <em>Compare</em> on up to {{ compare_max }} project cards, then come back here.</p>
+  <a class="btn btn-primary" href="{{ url_for('customer.browsePlatformProjects') }}">Browse projects</a>
+</div></div>
+{% else %}
+{% if projects|length < min_projects %}
+  <div class="alert alert-info">Add at least one more project to compare. <a href="{{ url_for('customer.browsePlatformProjects') }}">Browse projects</a></div>
+{% endif %}
+<div class="card"><div class="table-responsive">
+<table class="table align-middle mb-0 cf-compare">
+  <thead><tr>
+    <th style="width: 16%"></th>
+    {% for p in projects %}
+    <th style="width: {{ 84 // projects|length }}%">
+      {{ cover(p, 120) }}
+      <div class="mt-2"><a class="text-decoration-none" href="{{ url_for('customer.viewProjectDetails', project_id=p.id) }}">{{ p.title }}</a></div>
+      <form method="post" action="{{ url_for('customer.removeFromComparison') }}" class="mt-1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="project_id" value="{{ p.id }}">
+        <button class="btn btn-sm btn-outline-danger">Remove</button>
+      </form>
+    </th>
+    {% endfor %}
+  </tr></thead>
+  <tbody>
+    {% for row in comparison.rows %}
+    <tr class="{{ 'table-warning' if row.differs and projects|length > 1 }}">
+      <th scope="row" class="text-muted small">{{ row.label }}</th>
+      {% for v in row['values'] %}<td>{{ v }}</td>{% endfor %}
+    </tr>
+    {% endfor %}
+    <tr>
+      <th scope="row" class="text-muted small">Description</th>
+      {% for p in projects %}<td class="small">{{ (p.description or '—')[:280] }}{{ '…' if p.description and p.description|length > 280 }}</td>{% endfor %}
+    </tr>
+    <tr>
+      <th scope="row"></th>
+      {% for p in projects %}<td><a class="btn btn-sm btn-primary" href="{{ url_for('customer.viewProjectDetails', project_id=p.id) }}">View details</a></td>{% endfor %}
+    </tr>
+  </tbody>
+</table></div></div>
+<p class="small text-muted mt-2"><span class="badge text-bg-warning">&nbsp;</span> Highlighted rows are where the projects differ.</p>
+<form method="post" action="{{ url_for('customer.clearComparison') }}" class="mt-2">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="next" value="{{ url_for('customer.compareProjects') }}">
+  <button class="btn btn-outline-secondary btn-sm">Clear comparison</button>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import customer_nav with context %}
+
+{% block content %}
+
+{{ customer_nav('reviews') }}
+
+<div class="mb-4">
+    <h3 class="fw-bold mb-1">My Renovation Reviews</h3>
+    <p class="text-muted">
+        Review your completed renovation projects and manage your feedback.
+    </p>
+</div>
+
+{% if renovations %}
+
+    {% for renovation in renovations %}
+
+        {% set existing = renovation.existing_review %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1">
+                            {{ renovation.title }}
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Renovation ID: {{ renovation.renovation_id }}
+                        </p>
+                    </div>
+
+                    <span class="badge bg-success">
+                        Completed
+                    </span>
+                </div>
+
+                {% if existing %}
+                    <div class="alert alert-light border">
+                        <strong>Your existing review</strong>
+
+                        <p class="mb-1 mt-2">
+                            Rating:
+                            <span class="text-warning">
+                                {% for i in range(existing.rating|int) %}
+                                    ★
+                                {% endfor %}
+                            </span>
+                            ({{ existing.rating }}/5)
+                        </p>
+
+                        <p class="mb-0" style="white-space: pre-wrap;">{{ existing.review }}</p>
+
+                        {% if existing.reply %}
+                            <hr>
+                            <p class="small mb-0">
+                                <strong>Designer reply:</strong>
+                                {{ existing.reply }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <h6 class="fw-bold mt-3">Edit your review</h6>
+                {% else %}
+                    <h6 class="fw-bold">Write your review</h6>
+                {% endif %}
+
+                <form method="post"
+                      action="{{ url_for('customer.submitCustomerReview', renovation_id=renovation.renovation_id) }}">
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Rating
+                        </label>
+
+                        <select name="rating" class="form-select" required>
+                            <option value="">Select a rating</option>
+
+                            {% for rating in range(1, 6) %}
+                                <option value="{{ rating }}"
+                                    {% if existing and existing.rating|int == rating %}
+                                        selected
+                                    {% endif %}>
+                                    {{ rating }} / 5
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Written feedback
+                        </label>
+
+                        <textarea name="review"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="1000"
+                                  placeholder="Share your experience with this renovation..."
+                                  required>{{ existing.review if existing else '' }}</textarea>
+
+                        <div class="form-text">
+                            Maximum 1000 characters.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        {% if existing %}
+                            Update Review
+                        {% else %}
+                            Submit Review
+                        {% endif %}
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <h5 class="fw-bold">No completed renovations yet</h5>
+            <p class="text-muted mb-0">
+                Once one of your renovation projects is marked as completed,
+                you can leave a review here.
+            </p>
+        </div>
+    </div>
+
+{% endif %}
+
+{% endblock %}

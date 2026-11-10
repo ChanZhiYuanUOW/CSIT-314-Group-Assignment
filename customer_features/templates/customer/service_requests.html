@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h2 class="fw-bold mb-0">My Service Requests</h2>
+
+        <a href="{{ url_for('customer.quotationComparison') }}"
+        class="btn btn-primary">
+            <i class="bi bi-columns-gap"></i>
+            Compare Quotations
+        </a>
+    </div>
+    <p class="text-muted mb-4">
+        Track your renovation requests and their progress.
+    </p>
+
+    {% if service_requests %}
+
+        {% for item in service_requests %}
+        <div class="card mb-3">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">
+                        Request #{{ item.request_id }}
+                    </h5>
+
+                    <span class="badge bg-info">
+                        {{ item.status }}
+                    </span>
+                </div>
+
+                <p class="mb-1">
+                    <strong>Request Type:</strong>
+                    {{ item.request_type }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Budget:</strong>
+                    S${{ "%.2f"|format(item.budget|float) }}
+                </p>
+
+                <p class="mb-1">
+                    <strong>Submitted:</strong>
+                    {{ item.submitted_at }}
+                </p>
+
+                <hr>
+
+                <h6 class="fw-bold">Renovation Brief</h6>
+                <p>{{ item.renovation_brief }}</p>
+<hr>
+
+                {% if item.quotation %}
+                    <h5 class="fw-bold mb-3">Itemised Quotation</h5>
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Item Description</th>
+                                <th class="text-end">Amount (S$)</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for line in item.quotation['items'] %}
+                            <tr>
+                                <td>{{ line.description }}</td>
+                                <td class="text-end">
+                                    {{ "%.2f"|format(line.amount|float) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+
+                        <tfoot>
+                            <tr>
+                                <th>Total</th>
+                                <th class="text-end">
+                                    S${{ "%.2f"|format(item.quotation.total_amount|float) }}
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <p>
+                        <strong>Scope of Works:</strong><br>
+                        {{ item.quotation.scope }}
+                    </p>
+
+                    <p>
+                        <strong>Exclusions:</strong><br>
+                        {{ item.quotation.exclusions }}
+                    </p>
+
+                    <p class="small text-muted">
+                        Quotation created: {{ item.quotation.created_at }}
+                    </p>
+                    {% if item.request_id|string in comparison_ids %}
+
+                        <button type="button" class="btn btn-success mb-3" disabled>
+                            ✓ Comparing
+                        </button>
+
+                    {% else %}
+
+                        <form method="POST"
+                            action="{{ url_for('customer.addQuotationToCompare', request_id=item.request_id) }}"
+                            class="mb-3">
+
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-columns-gap"></i>
+                                Select to Compare
+                            </button>
+                        </form>
+
+                    {% endif %}
+
+                {% else %}
+                    <div class="alert alert-secondary">
+                        The designer has not provided an itemised quotation yet.
+                    </div>
+                {% endif %}
+                {% if item.consultation %}
+                    <hr>
+
+                    <h5 class="fw-bold mb-3">Consultation Details</h5>
+
+                    <p class="mb-2">
+                        <strong>Status:</strong>
+                        <span class="badge
+                            {% if item.consultation.status == 'Accepted' %}bg-success
+                            {% elif item.consultation.status == 'Declined' %}bg-danger
+                            {% elif item.consultation.status == 'Time Proposed' %}bg-info
+                            {% else %}bg-warning text-dark{% endif %}">
+                            {{ item.consultation.status }}
+                        </span>
+                    </p>
+
+                    {% if item.consultation.status == 'Time Proposed' %}
+                        <p>
+                            <strong>Proposed consultation time:</strong>
+                            {{ item.consultation.proposed_time }}
+                        </p>
+                    {% elif item.consultation.status == 'Accepted' %}
+                        <p>
+                            <strong>Confirmed consultation time:</strong>
+                            {{ item.consultation.confirmed_time }}
+                        </p>
+                    {% else %}
+                        <p>
+                            <strong>Requested consultation time:</strong>
+                            {{ item.consultation.proposed_time }}
+                        </p>
+                    {% endif %}
+
+                    {% if item.consultation.designer_note %}
+                        <p>
+                            <strong>Designer note:</strong>
+                            {{ item.consultation.designer_note }}
+                        </p>
+                    {% endif %}
+
+                    {% if item.consultation.status == 'Time Proposed' %}
+                        <hr>
+                        <p><strong>Would you like to accept this proposed consultation time?</strong></p>
+
+                        <form method="POST"
+                            action="{{ url_for('customer.respondToConsultation', request_id=item.request_id) }}"
+                            class="d-flex gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <button type="submit"
+                                    name="decision"
+                                    value="accept"
+                                    class="btn btn-success">
+                                Accept
+                            </button>
+
+                            <button type="submit"
+                                    name="decision"
+                                    value="decline"
+                                    class="btn btn-outline-danger">
+                                Decline
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+
+                <hr>
+
+                <h5 class="fw-bold mb-3">Renovation Progress</h5>
+
+                {% if item.latest_progress %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>{{ item.latest_progress['stage'] }}</strong>
+                            <strong>
+                                {{ item.latest_progress['completion_percentage'] }}%
+                            </strong>
+                        </div>
+
+                        <div class="progress mt-2" style="height: 18px;">
+                            <div class="progress-bar"
+                                 role="progressbar"
+                                 style="width: {{ item.latest_progress['completion_percentage'] }}%"
+                                 aria-valuenow="{{ item.latest_progress['completion_percentage'] }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if item.latest_progress['note'] %}
+                        <p>
+                            <strong>Latest Update:</strong><br>
+                            {{ item.latest_progress['note'] }}
+                        </p>
+                    {% endif %}
+
+                    <small class="text-muted">
+                        Last updated: {{ item.latest_progress['updated_at'] }}
+                    </small>
+
+                    {% if item.progress_history|length > 1 %}
+                        <hr>
+                        <h6 class="fw-bold">Previous Updates</h6>
+
+                        {% for update in item.progress_history[1:] %}
+                            <div class="border rounded p-3 mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ update['stage'] }}</strong>
+                                    <span>{{ update['completion_percentage'] }}%</span>
+                                </div>
+
+                                {% if update['note'] %}
+                                    <p class="mb-1">{{ update['note'] }}</p>
+                                {% endif %}
+
+                                <small class="text-muted">
+                                    {{ update['updated_at'] }}
+                                </small>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                {% else %}
+                    <div class="alert alert-secondary mb-0">
+                        Your designer has not posted any renovation progress updates yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="alert alert-info">
+            You have not submitted any service requests yet.
+        </div>
+
+    {% endif %}
+
+    <a href="{{ url_for('customer.browsePlatformProjects') }}"
+       class="btn btn-outline-primary">
+        Browse Projects
+    </a>
+
+</div>
+{% endblock %}

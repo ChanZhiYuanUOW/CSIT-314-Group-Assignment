@@ -1,0 +1,124 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Compare Quotations</h2>
+            <p class="text-muted">
+                Compare quotations selected from your service requests.
+            </p>
+        </div>
+
+        <a href="{{ url_for('customer.myServiceRequests') }}"
+           class="btn btn-outline-secondary">
+            Back to My Requests
+        </a>
+    </div>
+
+    {% if comparison_requests %}
+
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Comparison Details</th>
+
+                        {% for item in comparison_requests %}
+                            <th>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Request #{{ item.request_id }}</span>
+
+                                    <form method="POST"
+                                        action="{{ url_for('customer.removeQuotationFromCompare', request_id=item.request_id) }}">
+
+                                        <input type="hidden" name="csrf_token"
+                                            value="{{ csrf_token() }}">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-danger">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <th>Request Type</th>
+                        {% for item in comparison_requests %}
+                            <td>{{ item.request_type }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <th>Renovation Brief</th>
+                        {% for item in comparison_requests %}
+                            <td>{{ item.renovation_brief }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <th>Total Quotation</th>
+                        {% for item in comparison_requests %}
+                            <td class="fw-bold">
+                                S${{ "%.2f"|format(item.quotation.total_amount|float) }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <th>Itemised Costs</th>
+                        {% for item in comparison_requests %}
+                            <td>
+                                {% for line in item.quotation['items'] %}
+                                    <div class="mb-2">
+                                        <strong>{{ line.description }}</strong>
+                                        <br>
+                                        S${{ "%.2f"|format(line.amount|float) }}
+                                    </div>
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <th>Scope of Works</th>
+                        {% for item in comparison_requests %}
+                            <td>{{ item.quotation.scope }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <th>Exclusions</th>
+                        {% for item in comparison_requests %}
+                            <td>{{ item.quotation.exclusions }}</td>
+                        {% endfor %}
+                    </tr>
+
+                    <tr>
+                        <th>Quotation Date</th>
+                        {% for item in comparison_requests %}
+                            <td>{{ item.quotation.created_at }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+
+        <div class="alert alert-info">
+            You have not selected any quotations to compare yet.
+            Go to My Requests and select quotations to get started.
+        </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

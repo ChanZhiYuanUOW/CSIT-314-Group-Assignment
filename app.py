@@ -43,12 +43,11 @@ def create_app():
     from platform_management import init_app
     init_app(app)
 
-    from designer_portfolio.app import bp as designer_bp
-    app.register_blueprint(designer_bp, url_prefix="/designer")
-
     from customer_features import init_app as init_customer_features
     init_customer_features(app)
 
+    from designer_portfolio.app import bp as designer_bp
+    app.register_blueprint(designer_bp, url_prefix="/designer")
 
     app.register_blueprint(renovation_bp)
     app.register_blueprint(availability_bp)
@@ -62,5 +61,4 @@ if __name__ == "__main__":
     print("314 Interior Design Running on http://127.0.0.1:5000")
     print("Demo Admin Login -> Email: admin@help314id.sg | Password: password123")
     print("Demo ID Login -> Email: designer@help314id.sg | Password: password123")
-    print("Demo Customer Login -> Email: customer@help314id.sg | Password: password123")
     app.run(debug=True, port=5000)

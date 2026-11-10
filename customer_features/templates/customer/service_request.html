@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="fw-bold mb-2">Submit Service Request</h3>
+
+                    <p class="text-muted">
+                        Submit your renovation requirements to
+                        <strong>{{ project.designer }}</strong>.
+                    </p>
+
+                    <hr>
+
+                    <form method="POST"
+                          action="{{ url_for('customer.createServiceRequest', project_id=project_id) }}">
+
+                        <input type="hidden" name="csrf_token"
+                               value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label for="renovation_brief" class="form-label fw-semibold">
+                                Renovation Brief
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="renovation_brief"
+                                name="renovation_brief"
+                                rows="5"
+                                maxlength="2000"
+                                required
+                                placeholder="Describe your renovation requirements...">{{ request.form.get('renovation_brief', '') }}</textarea>
+                            <div class="form-text">
+                                Maximum 2000 characters.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="budget" class="form-label fw-semibold">
+                                Budget (SGD)
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="budget"
+                                name="budget"
+                                min="0.01"
+                                step="0.01"
+                                required
+                                value="{{ request.form.get('budget', '') }}"
+                                placeholder="e.g. 30000">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="request_type" class="form-label fw-semibold">
+                                What would you like to request?
+                            </label>
+                            <select class="form-select"
+                                    id="request_type"
+                                    name="request_type"
+                                    required>
+                                <option value="">Select a request type</option>
+                                <option value="Quotation"
+                                    {% if request.form.get('request_type') == 'Quotation' %}selected{% endif %}>
+                                    Itemised Quotation
+                                </option>
+                                <option value="Consultation"
+                                    {% if request.form.get('request_type') == 'Consultation' %}selected{% endif %}>
+                                    Consultation Session
+                                </option>
+                                <option value="Quotation and Consultation"
+                                    {% if request.form.get('request_type') == 'Quotation and Consultation' %}selected{% endif %}>
+                                    Both Quotation and Consultation
+                                </option>
+                            </select>
+                        </div>
+                        <div class="mb-4" id="consultation_time_group" style="display: none;">
+                            <label for="proposed_time" class="form-label fw-semibold">
+                                Preferred Consultation Date and Time
+                            </label>
+                            <input
+                                type="datetime-local"
+                                class="form-control"
+                                id="proposed_time"
+                                name="proposed_time"
+                                value="{{ request.form.get('proposed_time', '') }}">
+                            <div class="form-text">
+                                Select your preferred date and time for the consultation.
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                Submit Request
+                            </button>
+
+                            <a href="{{ url_for('customer.viewProjectDetails', project_id=project_id) }}"
+                               class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const requestType = document.getElementById('request_type');
+        const consultationGroup = document.getElementById('consultation_time_group');
+        const proposedTime = document.getElementById('proposed_time');
+
+        function toggleConsultationTime() {
+            const needsConsultation =
+                requestType.value === 'Consultation' ||
+                requestType.value === 'Quotation and Consultation';
+
+            consultationGroup.style.display = needsConsultation ? 'block' : 'none';
+            proposedTime.required = needsConsultation;
+
+            if (!needsConsultation) {
+                proposedTime.value = '';
+            }
+        }
+
+        requestType.addEventListener('change', toggleConsultationTime);
+
+        toggleConsultationTime();
+    });
+</script>
+
+{% endblock %}

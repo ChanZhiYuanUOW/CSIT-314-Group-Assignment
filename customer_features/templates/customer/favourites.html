@@ -1,0 +1,105 @@
+{% extends "customer/_layout.html" %}
+{% from "customer/_macros.html" import project_card, compare_tray, customer_nav with context %}
+
+{% block content %}
+{{ customer_nav('favourites') }}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="fw-bold mb-1">My Favourite Projects</h3>
+    <p class="text-muted mb-0">Organise your saved projects into groups.</p>
+  </div>
+</div>
+
+<!-- Create a new favourite group -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="fw-bold">Create a Favourite Group</h5>
+    <form method="post" action="{{ url_for('customer.createFavouriteGroup') }}" class="row g-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="col-md-8">
+        <input type="text" name="name" class="form-control"
+               maxlength="50" placeholder="e.g. Living Room Ideas" required>
+      </div>
+      <div class="col-md-4 d-grid">
+        <button class="btn btn-primary">Create Group</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Favourite groups -->
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <a href="{{ url_for('customer.viewFavourites') }}"
+     class="btn btn-sm {{ 'btn-primary' if not selected_group else 'btn-outline-primary' }}">
+    All Favourites
+  </a>
+
+  {% for group in groups %}
+    <a href="{{ url_for('customer.viewFavourites', group_id=group.id) }}"
+       class="btn btn-sm {{ 'btn-primary' if selected_group|string == group.id|string else 'btn-outline-primary' }}">
+      {{ group.name }}
+    </a>
+  {% endfor %}
+</div>
+
+{% if groups %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="get" action="{{ url_for('customer.viewFavourites') }}" class="row g-2">
+        {% if selected_group %}
+          <input type="hidden" name="group_id" value="{{ selected_group }}">
+        {% endif %}
+        <div class="col-md-9">
+          <input type="search" name="q" value="{{ keyword }}"
+                 class="form-control" placeholder="Search your favourite projects...">
+        </div>
+        <div class="col-md-3 d-grid">
+          <button class="btn btn-outline-primary">Search Favourites</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if selected_group %}
+    <form method="post"
+          action="{{ url_for('customer.deleteFavouriteGroup', group_id=selected_group|int) }}"
+          class="mb-3"
+          onsubmit="return confirm('Delete this group and its saved projects?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-outline-danger">Delete Selected Group</button>
+    </form>
+  {% endif %}
+{% endif %}
+
+{{ compare_tray() }}
+
+{% if projects %}
+  <div class="row g-3">
+    {% for p in projects %}
+      {{ project_card(p, request.full_path, favourite_group_id=selected_group, favourite_groups=groups) }}
+    {% endfor %}
+  </div>
+{% elif groups %}
+  <div class="card">
+    <div class="card-body text-center py-5">
+      <h6 class="fw-bold">No favourite projects found</h6>
+      <p class="text-muted">Save projects into your groups, or try a different search.</p>
+      <a class="btn btn-primary" href="{{ url_for('customer.browsePlatformProjects') }}">
+        Browse Projects
+      </a>
+    </div>
+  </div>
+{% else %}
+  <div class="card">
+    <div class="card-body text-center py-5">
+      <h6 class="fw-bold">You haven't created any favourite groups yet</h6>
+      <p class="text-muted">Create a group above to start organising your favourite projects.</p>
+      <a class="btn btn-primary" href="{{ url_for('customer.browsePlatformProjects') }}">
+        Browse Projects
+      </a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}
