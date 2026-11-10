@@ -1,7 +1,7 @@
 """Tests for the Customer features. Fully isolated: temporary accounts CSV + temporary platform CSV folder,
 so the shared demo data (data/*.csv, data/platform/*.csv) is never touched.
 
-Run from 314_id_help_page:  python -m pytest test_customer_features.py -q      (or: python -m unittest test_customer_features)
+Run from the repo root:  python -m pytest test_customer_features.py -q      (or: python -m unittest test_customer_features)
 """
 import csv
 import importlib.util

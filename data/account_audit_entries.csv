@@ -172,3 +172,11 @@ audit_id,admin_user_id,target_user_id,target_email,action,details,timestamp
 171,1,35,chloe_ng_35@help314id.sg,Verify Business Registration,Reviewed UEN 201549893K (Ng Interior Studio #12) -> Verified.,2026-11-05 16:19:51
 172,1,1,admin@help314id.sg,Configure Notification Preferences,"Notifications set: Email=False, SMS=False, Marketing=False.",2026-11-05 16:20:20
 173,231,231,chanelle@gmail.com,Register Account,Public registration completed as Customer.,2026-11-10 09:43:31
+174,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-10 12:32:23
+175,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-10 12:32:23
+176,1,2,designer@help314id.sg,Moderate Verified Business,"Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Suspended, Specialty -> Condo & Luxury Specialist, Notes: Temporary compliance check",2026-11-10 12:32:23
+177,1,2,designer@help314id.sg,Moderate Verified Business,Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Active,2026-11-10 12:32:23
+178,1,3,customer@help314id.sg,Moderate Account,Account status updated to Deactivated.,2026-11-10 12:39:46
+179,1,3,customer@help314id.sg,Reactivate Account,Account status updated to Active.,2026-11-10 12:39:46
+180,1,2,designer@help314id.sg,Moderate Verified Business,"Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Suspended, Specialty -> Condo & Luxury Specialist, Notes: Temporary compliance check",2026-11-10 12:39:46
+181,1,2,designer@help314id.sg,Moderate Verified Business,Tan Interior Studio #1 (UEN 202326199K): Listing Status -> Active,2026-11-10 12:39:46
