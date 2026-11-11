@@ -44,21 +44,12 @@ class ServiceRequestBoundary:
             flash(str(e), "danger")
             return redirect(url_for("service_request.processServiceRequest"))
 
-        progress_history = []
-
-        if selected:
-            progress_history = service_request_control.getRenovationProgress(
-                designer_user_id=session["user_id"],
-                request_id=selected["request"]["request_id"]
-            )
-
         return render_template(
             "service_requests.html",
             requests=request_list,
             selected=selected,
             status_filter=status_filter,
-            statuses=service_request_control.REQUEST_STATUSES,
-            progress_history=progress_history
+            statuses=service_request_control.REQUEST_STATUSES
         )
     
     @staticmethod
@@ -85,49 +76,6 @@ class ServiceRequestBoundary:
 
         flash(msg, ("warning" if "over the customer's budget" in msg else "success") if ok else "danger")
         return redirect(url_for("service_request.processServiceRequest", selected_id=request_id))
-    @staticmethod
-    @service_request_bp.route(
-        "/designer/requests/<request_id>/progress",
-        methods=["POST"]
-    )
-    def updateRenovationProgress(request_id):
-        if not ServiceRequestBoundary._isDesigner():
-            flash("Unauthorised: Please log in as an Interior Designer.", "danger")
-            return redirect(url_for("auth.authenticateLogin"))
-
-        try:
-            completion_percentage = int(
-                request.form.get("completion_percentage", "")
-            )
-
-            ok, msg = service_request_control.updateRenovationProgress(
-                designer_user_id=session["user_id"],
-                request_id=request_id,
-                stage=request.form.get("stage", ""),
-                completion_percentage=completion_percentage,
-                note=request.form.get("note", "")
-            )
-
-        except ValueError:
-            ok, msg = False, "Please enter a valid completion percentage."
-
-        except (PermissionError, LookupError) as e:
-            flash(str(e), "danger")
-            return redirect(
-                url_for(
-                    "service_request.processServiceRequest",
-                    selected_id=request_id
-                )
-            )
-
-        flash(msg, "success" if ok else "danger")
-
-        return redirect(
-            url_for(
-                "service_request.processServiceRequest",
-                selected_id=request_id
-            )
-        )
 
     @staticmethod
     @service_request_bp.route("/designer/requests/<request_id>/consultation", methods=["POST"])
